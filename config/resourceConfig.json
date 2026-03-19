@@ -1,0 +1,11 @@
+{
+  "resourceDir": "./assets/json/",
+  "configDir": "./config/",
+  "resources": [
+    "welcomes.json",
+    "insults.json"
+  ],
+  "configs": [
+    "botConfig.json"
+  ]
+}
