@@ -1,3 +1,44 @@
 {
-
+  "initTasks": {
+    "sendRolesMessage": false,
+    "sendLocationMessage": true
+  },
+  "notificationRoles": {
+    "message": "# Notification Roles\n\n ## __**Click a button below to add or remove one of these roles**__. \nAll members are advised to tag these roles in channels for more activity specific LFG notification",
+    "roles": [
+      {
+        "id": "1484238361374757075",
+        "label": "LFG-Raid"
+      },
+      {
+        "id": "1484238437228744814",
+        "label": "LFG-Dungeon"
+      },
+      {
+        "id": "1484238520380817428",
+        "label": "LFG-Crucible"
+      },
+      {
+        "id": "1484238571689869362",
+        "label": "LFG-Conquests"
+      },
+      {
+        "id": "1484238619563790689",
+        "label": "LFG-Campaign"
+      }
+    ]
+  },
+  "server": {
+    "serverID": "1428067161754042481",
+    "channels": {
+      "welcome": "1428082110219944116",
+      "menu": "1484561524013142170",
+      "channels": "1483832676807872663",
+      "register": "1484568633161027584",
+      "general": "1428067163637547040",
+      "lfgRequests": "1428070332635545682",
+      "adminChat": "1428132911005040690",
+      "notificationRoles": "1484562546299240509"
+    }
+  }
 }

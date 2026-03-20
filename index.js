@@ -54,7 +54,7 @@ EventHandler.init({
  * Initialise top-level Server Manager
  */
 ServerManager.init({
-    resources: ResourceManager,
+    Resources: ResourceManager,
     commands: Commands,
     events: EventHandler,
 },DorkBot)

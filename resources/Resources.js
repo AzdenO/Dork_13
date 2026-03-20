@@ -44,5 +44,18 @@ export default class Resources {
     getBotConfig(){
         return this.botConfig;
     }
+    ////////////////////////////////////////////////////////////////////////////////////
+    getAdvisoryChannels(){
+        return {
+            menu: this.serverConfig.server.channels.menu,
+            supe: this.serverConfig.server.channels.channels,
+            register: this.serverConfig.server.channels.register,
+            welcome: this.serverConfig.server.channels.welcome,
+        }
+    }
+    ////////////////////////////////////////////////////////////////////////////////////
+    getServerConfig(){
+        return this.serverConfig;
+    }
 
 }

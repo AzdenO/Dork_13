@@ -6,6 +6,7 @@
     "insults.json"
   ],
   "configs": [
-    "botConfig.json"
+    "botConfig.json",
+    "serverConfig.json"
   ]
 }

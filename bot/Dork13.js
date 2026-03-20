@@ -21,11 +21,10 @@ export default class Dork{
      * Method to initialise connection to the server
      */
     async connect(){
-        this.bot.once(Discord.Events.ClientReady, (LoggedIn)=>{
-            console.log("[Dork-13] Successfully connected to Skill Issues Inc. ");
-        });
         try{
             await this.bot.login(process.env.TOKEN);
+            await this.awaitReady();
+            console.log("[Dork-13]: Successfully connected to the server");
             return true;
         }catch(e){
             console.log("[Dork-13]: Failed to connect to server:\n\t"+e.message);
@@ -42,4 +41,30 @@ export default class Dork{
         return this.bot;
     }
     ///////////////////////////////////////////////////////////////////////////////////
+    async getChannel(channelID){
+        return await this.bot.channels.fetch(channelID);
+    }
+    ///////////////////////////////////////////////////////////////////////////////////
+    /**
+     * GET function to retrieve server info/object
+     */
+    async getServerManifest(serverID){
+        return await this.bot.guilds.fetch(serverID);
+    }
+    //////////////////////////////////////////////////////////////////////////////////
+    /**
+     * Function used primarily at start of program initialisation, to wait for the bots ready signal before
+     * proceeding with any bot operations
+     * @returns {Promise<unknown>}
+     */
+    async awaitReady(){
+        return new Promise((resolve)=>{
+            if(this.bot.isReady()){
+                resolve();
+            }else{
+                this.bot.once("clientReady",()=>resolve());
+            }
+        })
+    }
+    //////////////////////////////////////////////////////////////////////////////////
 }

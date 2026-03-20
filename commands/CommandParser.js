@@ -13,6 +13,7 @@ let BotResources = null
 import simulateJoin from "./functions/SimulateJoin.js";
 import InsultCommand from "./functions/insult.js";
 import LocationCommand from "./functions/SetLocation.js";
+import NotificationAssignment from "./functions/NotificationRoles.js"
 ////////////////////////////////////////////////////////////////////////////////////
 function init(bot, resources){
     registerCommands(bot);
@@ -36,6 +37,19 @@ async function parseCommand(interaction){
     }
 }
 ////////////////////////////////////////////////////////////////////////////////////
+/**
+ * Function to handle a button click and hand logic off to correct function
+ * @param interaction
+ * @returns {Promise<void>}
+ */
+async function parseButton(interaction){
+    const btnData = interaction.customId.split("/");
+    switch(btnData[0]){
+        case "notifAssign":
+            NotificationAssignment(interaction,btnData[1],MessageFlags);
+    }
+}
+////////////////////////////////////////////////////////////////////////////////////
 function registerCommands(bot){
     const commands = [
         simulate_join.toJSON(),
@@ -54,5 +68,6 @@ function registerCommands(bot){
 ////////////////////////////////////////////////////////////////////////////////////
 export default {
     parseCommand,
+    parseButton,
     init
 }
