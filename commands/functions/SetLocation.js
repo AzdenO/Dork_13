@@ -9,10 +9,12 @@ const codes = {
     SA: "[SA]",
     BA: "[BA]"
 }
-export default (interaction, flags)=>{
+export default async(interaction, flags)=>{
     try{
         const localCode = codes[interaction.options.getString("country")];
-        const prepared_nickname = prepareNickname(interaction.member.nickname);
+        let name = interaction.member.displayName
+        console.log("Name: "+name);
+        const prepared_nickname = prepareNickname(name);
         interaction.member.setNickname(localCode+" "+prepared_nickname);
         interaction.reply({
             content: "Updated your location to"+localCode,

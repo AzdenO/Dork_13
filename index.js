@@ -3,9 +3,14 @@ import DotEnv from "dotenv";
 import Commands from "./commands/CommandParser.js";
 import Resources from "./resources/Resources.js";
 import EventHandler from "./events/eventHandler.js";
+import Dork from "./bot/Dork13.js"
+import ServerManager from "./server/ServerManager.js";
 ///////////////////////////////////////////////////////////////////////////////////////
-
-const dork_13 = new Discord.Client({
+/**
+ * Initialise new discord client object
+ * @type {Client<boolean>} The discord Client object instance
+ */
+const client = new Discord.Client({
     intents: [
         Discord.IntentsBitField.Flags.Guilds,
         Discord.IntentsBitField.Flags.GuildMembers,
@@ -13,25 +18,47 @@ const dork_13 = new Discord.Client({
         Discord.IntentsBitField.Flags.MessageContent,
     ]
 });
+/**
+ * Initialise new Bot Object, providing the discord client object
+ * @type {Dork}
+ */
+const DorkBot = new Dork(client);
 
+//////////////////////////////////////////////////////////////////////////////////////
+/**
+ * Initialise resource manager
+ * @type {Resources}
+ */
 const ResourceManager = new Resources();
 
+/**
+ * Config .env file so all variables are loaded into process.env
+ */
 DotEnv.configDotenv()
 
-Commands.init(dork_13, ResourceManager);
+/**
+ * Initialise commands module
+ */
+Commands.init(DorkBot.getClient(), ResourceManager);
 
+/**
+ * Initialise events handler module
+ */
 EventHandler.init({
     Resources: ResourceManager,
     Discord: Discord,
     CommandsParser: Commands
-},dork_13);
+},DorkBot.getClient());
 
+/**
+ * Initialise top-level Server Manager
+ */
+ServerManager.init({
+    resources: ResourceManager,
+    commands: Commands,
+    events: EventHandler,
+},DorkBot)
 //////////////////////////////////////////////////////////////////////////////////////
-
-await dork_13.login(process.env.TOKEN);
-
-dork_13.once(Discord.Events.ClientReady, (LoggedIn)=>{
-    console.log("Bot Central:// Dork-13 has successfully connected");
-});
+ServerManager.startBot();
 
 

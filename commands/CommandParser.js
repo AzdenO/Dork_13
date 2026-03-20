@@ -20,7 +20,7 @@ function init(bot, resources){
     BotResources = resources;
 }
 ////////////////////////////////////////////////////////////////////////////////////
-function parseCommand(interaction){
+async function parseCommand(interaction){
     switch(interaction.commandName){
         case "simulate_join":
             simulateJoin(interaction, botGlobal);
@@ -29,7 +29,7 @@ function parseCommand(interaction){
             InsultCommand(interaction, BotResources.insults);
             break;
         case "set_location":
-            LocationCommand(interaction, MessageFlags);
+            await LocationCommand(interaction, MessageFlags);
             break;
         default:
             console.log("[Command Handler]: No such command /"+interaction.commandName);

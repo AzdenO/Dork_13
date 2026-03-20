@@ -35,10 +35,10 @@ function assignListeners(bot){
 
     });
 
-    bot.on(components.Discord.Events.InteractionCreate, (interaction)=>{
+    bot.on(components.Discord.Events.InteractionCreate, async(interaction)=>{
         if(interaction.isChatInputCommand()){
             console.log(`[Event Handler]: Command /${interaction.commandName} used by `+interaction.member.nickname)
-            components.CommandsParser.parseCommand(interaction);
+            await components.CommandsParser.parseCommand(interaction);
         }
     })
 }
