@@ -12,7 +12,10 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "dayjs": "^1.11.20",
     "discord.js": "^14.25.1",
-    "dotenv": "^17.3.1"
+    "dotenv": "^17.3.1",
+    "mongodb": "^7.1.0",
+    "node-cron": "^4.2.1"
   }
 }

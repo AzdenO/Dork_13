@@ -1,0 +1,12 @@
+/**
+ * @module Scheduler
+ * @description Scheduling module to abstract away some of crons messiness and expose only a few necessary methods
+ * @version 0.1
+ * @author AzdenO
+ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//Import Declarations
+import Cron from "node-cron";
+
+//Global Declarations
+let activeJobs = null;

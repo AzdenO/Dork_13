@@ -1,0 +1,32 @@
+{
+  "activity": {
+    "title": "Activity Card",
+    "description": "",
+    "color": 16753920,
+    "fields": [
+      {
+        "name": "Activity Name",
+        "value": "",
+        "inline": true
+      },
+      {
+        "name": "Date and Time",
+        "value": "",
+        "inline": true
+      },
+      {
+        "name": "Description",
+        "value": "",
+        "inline": false
+      }
+    ]
+  },
+  "modApp": {
+    "title": "Mod Application: ",
+    "description": "",
+    "color": 16753920,
+    "fields": [
+
+    ]
+  }
+}

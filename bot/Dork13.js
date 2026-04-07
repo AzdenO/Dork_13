@@ -12,9 +12,11 @@ export default class Dork{
     /**
      * @constructor Constructor function for Dork
      * @param client The discord Client object associated with our bot
+     * @param config
      */
-    constructor(client){
+    constructor(client, config){
         this.bot = client;
+        this.config = config;
     }
     ///////////////////////////////////////////////////////////////////////////////////
     /**
@@ -50,6 +52,10 @@ export default class Dork{
      */
     async getServerManifest(serverID){
         return await this.bot.guilds.fetch(serverID);
+    }
+    //////////////////////////////////////////////////////////////////////////////////
+    async getMember(memberID){
+        return await this.bot.guilds.cache.get(this.config.server.serverID).members.fetch(memberID);
     }
     //////////////////////////////////////////////////////////////////////////////////
     /**

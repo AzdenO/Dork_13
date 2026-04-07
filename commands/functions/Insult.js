@@ -6,6 +6,10 @@
  */
 export default async(interaction, insults) => {
     const selected = insults[Math.floor(Math.random()*insults.length)];
+    if(interaction.options.getMember("user").nickname === "[UK] Azden, Server Prime"){
+        interaction.reply("How DARE you try and insult our emperor");
+        return;
+    }
     const insult = prepareInsult(selected, interaction.options.getMember("user"));
     interaction.reply(insult);
 }

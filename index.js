@@ -5,7 +5,15 @@ import Resources from "./resources/Resources.js";
 import EventHandler from "./events/eventHandler.js";
 import Dork from "./bot/Dork13.js"
 import ServerManager from "./server/ServerManager.js";
+import ServerBus from "./events/emitter/ServerEmitter.js";
+import DatabaseManager from "./database/Database.js";
 ///////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Config .env file so all variables are loaded into process.env
+ */
+DotEnv.configDotenv()
+
 /**
  * Initialise new discord client object
  * @type {Client<boolean>} The discord Client object instance
@@ -22,7 +30,8 @@ const client = new Discord.Client({
  * Initialise new Bot Object, providing the discord client object
  * @type {Dork}
  */
-const DorkBot = new Dork(client);
+
+await DatabaseManager.init();
 
 //////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -32,14 +41,17 @@ const DorkBot = new Dork(client);
 const ResourceManager = new Resources();
 
 /**
- * Config .env file so all variables are loaded into process.env
+ * Initialise new Bot Object, providing the discord client object
+ * @type {Dork}
  */
-DotEnv.configDotenv()
+const DorkBot = new Dork(client, ResourceManager.getServerConfig());
+
+
 
 /**
  * Initialise commands module
  */
-Commands.init(DorkBot.getClient(), ResourceManager);
+Commands.init(DorkBot.getClient(), ResourceManager, ServerBus);
 
 /**
  * Initialise events handler module
@@ -47,7 +59,8 @@ Commands.init(DorkBot.getClient(), ResourceManager);
 EventHandler.init({
     Resources: ResourceManager,
     Discord: Discord,
-    CommandsParser: Commands
+    CommandsParser: Commands,
+    ServerBus: ServerBus,
 },DorkBot.getClient());
 
 /**
@@ -57,6 +70,8 @@ ServerManager.init({
     Resources: ResourceManager,
     commands: Commands,
     events: EventHandler,
+    ServerBus: ServerBus,
+    DBManager: DatabaseManager
 },DorkBot)
 //////////////////////////////////////////////////////////////////////////////////////
 ServerManager.startBot();

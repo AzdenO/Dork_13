@@ -1,7 +1,8 @@
 {
   "initTasks": {
     "sendRolesMessage": false,
-    "sendLocationMessage": true
+    "sendLocationMessage": true,
+    "sendModApplyMessage": false
   },
   "notificationRoles": {
     "message": "# Notification Roles\n\n ## __**Click a button below to add or remove one of these roles**__. \nAll members are advised to tag these roles in channels for more activity specific LFG notification",
@@ -31,6 +32,7 @@
   "server": {
     "serverID": "1428067161754042481",
     "channels": {
+      "raidMaster": "1466420938349477898",
       "welcome": "1428082110219944116",
       "menu": "1484561524013142170",
       "channels": "1483832676807872663",
@@ -38,7 +40,77 @@
       "general": "1428067163637547040",
       "lfgRequests": "1428070332635545682",
       "adminChat": "1428132911005040690",
-      "notificationRoles": "1484562546299240509"
+      "analytics": "1484616298238578840",
+      "testing": "1483821573981995099",
+      "notificationRoles": "1484562546299240509",
+      "raidCards": "1428139756427939946",
+      "modApply": "1490353743143632967",
+      "modAppDump": "1490459609524338965",
+      "sherpaRuns": "1466419221507604522"
+    },
+    "adminRoles": ["1464402837956984873","1428068427221696542"],
+    "modRole": "1490385869029376071"
+  },
+  "members": {
+    "locales": {
+      "UK": "[UK]",
+      "CA": "[CA]",
+      "EU": "[EU]",
+      "US": "[US]",
+      "SA": "[SA]",
+      "BA": "[BA]"
+    },
+    "analytics": {
+      "ignore": [
+        "activity-reports",
+        "game-reports",
+        "zero-hour",
+        "heliostat",
+        "salvations-edge",
+        "vow-of-the-disciple",
+        "sherpa-runs",
+        "clan-roster",
+        "clan-website",
+        "testing",
+        "admin-chat",
+        "server-analytics",
+        "trouble-tracking",
+        "server-suggestions"
+      ]
+    }
+  },
+  "moderation": {
+    "apply_button_id": "moderate/apply",
+    "apply_message": "__**Click the button below to apply to become a Skill Issues Incorporated Moderator**__",
+    "formData": {
+      "buttonIds": {
+        "approve": "moderate/apply-approve/",
+        "reject": "moderate/apply-reject/"
+      },
+      "customid": "moderate-application",
+      "questions": [
+        {
+          "id": "q1",
+          "value": "Where are you based? [UK/US/EU/etc.]"
+        },
+        {
+          "id": "q2",
+          "value": "How often are you on discord?"
+        },
+        {
+          "id": "q3",
+          "value": "Are you invested in this community?"
+        },
+        {
+          "id": "q4",
+          "value": "Do you have good knowledge of discord?"
+        },
+        {
+          "id": "q5",
+          "value": "Tell us a bit about yourself"
+        }
+      ]
     }
   }
+
 }

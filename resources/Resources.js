@@ -57,5 +57,13 @@ export default class Resources {
     getServerConfig(){
         return this.serverConfig;
     }
+    ///////////////////////////////////////////////////////////////////////////////////
+    getEventsConfig(){
+        return this.eventsConfig;
+    }
+    ///////////////////////////////////////////////////////////////////////////////////
+    getEmbeds(){
+        return this.embeds;
+    }
 
 }

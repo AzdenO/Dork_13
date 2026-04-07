@@ -3,10 +3,13 @@
   "configDir": "./config/",
   "resources": [
     "welcomes.json",
-    "insults.json"
+    "insults.json",
+    "embeds.json"
   ],
   "configs": [
     "botConfig.json",
-    "serverConfig.json"
+    "serverConfig.json",
+    "eventsConfig.json",
+    "databaseConfig.json"
   ]
 }

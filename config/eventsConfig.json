@@ -1,0 +1,9 @@
+{
+  "ServerEvents": {
+    "MESSAGE": "message",
+    "NEWMEMBER": "join",
+    "COMMAND": "cmd",
+    "BUTTON": "btn",
+    "EVENTCREATE": "event"
+  }
+}

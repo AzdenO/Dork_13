@@ -1,3 +1,5 @@
+import {MessageFlags} from "discord.js";
+
 /**
  * @module ServerManager
  * @description Main component for handling Server Management
@@ -7,8 +9,11 @@
 let Components = null;
 let ServerBot = null;
 let Server = null;
+let ServerEvents = null;
 
-import Messaging from "./messaging/Messaging.js"
+import Messaging from "./messaging/Messaging.js";
+import ActivityManager from "./activities/Activities.js";
+import ModerationManager from "./moderation/Moderator.js"
 /////////////////////////////////////////////////////////////////////////
 /**
  * Initialisation function for server module
@@ -18,6 +23,20 @@ import Messaging from "./messaging/Messaging.js"
 function init(dependencies, bot){
     Components = dependencies;
     ServerBot = bot;
+    ServerEvents = Components.Resources.getEventsConfig().ServerEvents;
+
+    console.log("[Server Management]: initialising moderation service");
+    ModerationManager.init(Components.Resources, ServerBot);
+
+    console.log("[Server Management]: initialising messaging service");
+    Messaging.init(Components.Resources);
+
+    console.log("[Server Management]: Assigning listeners to internal events");
+    assignServerListeners();
+
+    console.log("[Server Management]: Starting activities service...");
+    ActivityManager.init(Components.DBManager,Components.Resources,Components.Resources.getServerConfig(),ServerBot);
+
     console.log("[Server Management]: Successfully initialised");
 }
 /////////////////////////////////////////////////////////////////////////
@@ -30,6 +49,8 @@ async function startBot(){
     try{
         console.log("[Server Management]: Collecting server manifest");
         await collectServerManifest();
+        ActivityManager.assignActivityChannel(await ServerBot.getChannel(Components.Resources.getServerConfig().server.channels.raidCards))
+        ModerationManager.assignAdminChannel(await ServerBot.getChannel(Components.Resources.getServerConfig().server.channels.modAppDump))
         console.log("[Server Management]: Reading initialisation tasks...");
         await initialisationTasks();
     }catch(err){
@@ -54,9 +75,16 @@ async function initialisationTasks(){
         const message = Components.Resources.getServerConfig().notificationRoles.message;
         await Messaging.sendNotifRolesMessage(channel,roles,message);
     }
-    if(Components.Resources.getServerConfig().initTasks.sendRolesMessage){
+    if(Components.Resources.getServerConfig().initTasks.sendLocationMessage){
         console.log("[Server Management/Tasks]: User location message required, sending...");
 
+    }
+    if(Components.Resources.getServerConfig().initTasks.sendModApplyMessage){
+        console.log("[Server Management/Init Tasks]: Mod application message required, sending...");
+        await Messaging.sendModApplyMessage(await ServerBot.getChannel(
+            Components.Resources.getServerConfig().server.channels.modApply
+        ));
+        console.log("[Server Management]: Mod application message successfully sent");
     }
 }
 /////////////////////////////////////////////////////////////////////////
@@ -69,6 +97,55 @@ async function collectServerManifest(){
     Server = await ServerBot.getServerManifest(Components.Resources.getServerConfig().server.serverID);
 }
 /////////////////////////////////////////////////////////////////////////
+/**
+ * Function called at initialisation to assign listener functions to the programs own event bus
+ */
+async function assignServerListeners(){
+    Components.ServerBus.on("message", (message) => {
+        registerMessage(message);
+    });
+    Components.ServerBus.on("event-create",async(interaction)=>{
+        await interaction.deferReply({flags: MessageFlags.Ephemeral});
+        ActivityManager.createActivityCard(interaction);
+    });
+    Components.ServerBus.on("activity-join",(data)=>{
+        ActivityManager.addCardMember(data);
+    });
+    Components.ServerBus.on("activity-leave",(data)=>{
+        ActivityManager.removeCardMember(data);
+    });
+    Components.ServerBus.on("activity-delete",(data)=>{
+        ActivityManager.deleteCard(data);
+    });
+    Components.ServerBus.on("activity-editModal",async(data)=>{
+        ActivityManager.getEditModal(data);
+    });
+    Components.ServerBus.on("activity-edit",async(interact)=>{
+        await interact.deferReply({flags: MessageFlags.Ephemeral})
+        ActivityManager.editCard(interact);
+    });
+    Components.ServerBus.on("mod-apply",(data)=>{
+        ModerationManager.sendModApplyForm(data);
+    });
+    Components.ServerBus.on("mod-apply-submit",(data)=>{
+        ModerationManager.processApplication({
+            member: data.member,
+            interact: data
+        });
+    });
+    Components.ServerBus.on("mod-apply-approve",(data)=>{
+        ModerationManager.approveMod(data)
+    });
+    Components.ServerBus.on("mod-apply-reject",(data)=>{
+        ModerationManager.rejectMod(data)
+    })
+}
+/////////////////////////////////////////////////////////////////////////
+function registerMessage(msg){
+    console.log("[Server Management]: Message registered in channel: "+msg.channel.name);
+}
+/////////////////////////////////////////////////////////////////////////
+
 export default{
     init,
     terminateBot,
