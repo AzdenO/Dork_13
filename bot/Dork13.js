@@ -55,7 +55,7 @@ export default class Dork{
     }
     //////////////////////////////////////////////////////////////////////////////////
     async getMember(memberID){
-        return await this.bot.guilds.cache.get(this.config.server.serverID).members.fetch(memberID);
+        return await (await this.bot.guilds.cache.get(this.config.server.serverID)).members.fetch(memberID);
     }
     //////////////////////////////////////////////////////////////////////////////////
     /**

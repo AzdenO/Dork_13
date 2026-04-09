@@ -4,6 +4,7 @@
     "sendLocationMessage": true,
     "sendModApplyMessage": false
   },
+  "clanLinks": ["https://www.bungie.net/7/en/Clan/Profile/5410071","https://www.bungie.net/en/ClanV2?groupid=5416346"],
   "notificationRoles": {
     "message": "# Notification Roles\n\n ## __**Click a button below to add or remove one of these roles**__. \nAll members are advised to tag these roles in channels for more activity specific LFG notification",
     "roles": [
@@ -110,6 +111,13 @@
           "value": "Tell us a bit about yourself"
         }
       ]
+    }
+  },
+  "activities": {
+    "jobDelay": 1800000,
+    "jobType": {
+      "AUTODELETE": "auto-delete",
+      "AUTONOTIFY": "auto-notify"
     }
   }
 

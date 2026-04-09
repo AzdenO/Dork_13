@@ -74,6 +74,10 @@ async function getDocument(collection, identifier){
     return await collection.findOne(identifier);
 }
 /////////////////////////////////////////////////////////////////////////////////////
+async function getAllDocuments(collection){
+    return await collection.find({}).toArray();
+}
+/////////////////////////////////////////////////////////////////////////////////////
 async function deleteDocument(collection, identifier){
     let result = await collection.deleteOne(identifier);
 }
@@ -84,5 +88,6 @@ export default{
     newDocument,
     updateDocument,
     getDocument,
-    deleteDocument
+    deleteDocument,
+    getAllDocuments,
 }

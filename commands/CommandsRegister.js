@@ -76,3 +76,6 @@ export const UncleProtocol = new SlashCommandBuilder()
                 {name: "Disable",value:"on"}
             )
     )
+export const JoinClan = new SlashCommandBuilder()
+    .setName("join-clan")
+    .setDescription("Get a link to the in-game clan")

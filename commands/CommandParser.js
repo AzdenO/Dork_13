@@ -5,7 +5,7 @@
  * @version 0.1
  */
 import {REST, Routes, MessageFlags} from "discord.js";
-import {simulate_join, insult, location, activity, UncleProtocol} from "./CommandsRegister.js";
+import {simulate_join, insult, location, activity, UncleProtocol, JoinClan} from "./CommandsRegister.js";
 
 let botGlobal = null
 let BotResources = null
@@ -16,6 +16,7 @@ import InsultCommand from "./functions/insult.js";
 import LocationCommand from "./functions/SetLocation.js";
 import NotificationAssignment from "./functions/NotificationRoles.js"
 import EventModalCreate from "./functions/EventModal.js";
+import JoinClanFunc from "./functions/JoinClan.js";
 ////////////////////////////////////////////////////////////////////////////////////
 function init(bot, resources, bus){
     registerCommands(bot);
@@ -37,6 +38,9 @@ async function parseCommand(interaction){
             break
         case "activity":
             await EventModalCreate(interaction);
+            break;
+        case "join-clan":
+            await JoinClanFunc(interaction, BotResources.getServerConfig.clanLinks);
             break;
         default:
             console.log("[Command Handler]: No such command /"+interaction.commandName);
@@ -118,6 +122,7 @@ function registerCommands(bot){
         location.toJSON(),
         activity.toJSON(),
         UncleProtocol.toJSON(),
+        JoinClan.toJSON(),
     ]
 
     const rest = new REST({version:"10"}).setToken(process.env.TOKEN);

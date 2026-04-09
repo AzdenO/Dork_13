@@ -1,7 +1,7 @@
 /**
  * @module Activities
  * @description handles managing clan activities, such as creating raid/dungeon cards, editing them,etc.
- * @version.0.1
+ * @version 1.0
  * @author AzdenO
  */
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16,6 +16,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat.js'
 import utc from 'dayjs/plugin/utc.js'
 import timezone from 'dayjs/plugin/timezone.js'
 import dayjs from "dayjs";
+import {activity} from "../../commands/CommandsRegister.js";
 
 //Configure dayjs
 dayjs.extend(customParseFormat);
@@ -47,6 +48,9 @@ let timezones = {
     CDT: "America/Chicago",
     PST: "America/Los_Angeles"
 }
+
+let NotificationJobs = {}//dictionary to hold references to scheduled notification jobs
+let DeletionJobs = {}//dictionary to hold references to scheduled notification jobs
 
 /**
  * Initialise this module
@@ -97,6 +101,7 @@ async function createActivityCard(interaction){
             }
         }else{
             destinationChannel = await ServerBot.getChannel(interaction.channelId);
+            maxJoin = Number(interaction.fields.getTextInputValue("players"));
             valData={
 
                 time: interaction.fields.getTextInputValue("time"),
@@ -109,7 +114,7 @@ async function createActivityCard(interaction){
 
 
         ////Create card
-        const content = GenerateCard(interaction,Embeds.activity, activity.id)
+        const content = GenerateCard(interaction,Embeds.activity, activity.id, sherpa)
         const message = await destinationChannel.send({
             embeds:[content.embed],
             components:[content.buttons.one, content.buttons.two]
@@ -117,12 +122,12 @@ async function createActivityCard(interaction){
 
         //Create document
         if(sherpa){
-            activity.teacher = [interaction.member.displayName];
+            activity.teacher = [interaction.member.id];
             activity.learner = [];
             activity.maxLearn = Number(interaction.fields.getTextInputValue("maxlearn"));
             activity.maxTeacher = maxJoin-activity.maxLearn;
         }else{
-            activity.join = [interaction.member.displayName];
+            activity.join = [interaction.member.id];
             activity.maxJoin = maxJoin
         }
         activity.time = content.time;
@@ -132,10 +137,11 @@ async function createActivityCard(interaction){
         activity.alt = [];
         activity.messageID = message.id;
         activity.channelID = destinationChannel.id;
-        activity.owner = interaction.member.displayName;
+        activity.owner = interaction.member.id;
 
         //Send document
         if(await DBManager.newDocument(activity,ActivityCollection)){
+            scheduleActivityJobs(activity.id, activity.time*1000)
             interaction.editReply({
                 content:"Card created",
                 flags: MessageFlags.Ephemeral
@@ -146,7 +152,7 @@ async function createActivityCard(interaction){
                 content: "Interal Error, admin contacted",
                 flags: MessageFlags.Ephemeral
             });
-            const msg = await Channel.messages.fetch(activity.messageID);
+            const msg = await destinationChannel.messages.fetch(activity.messageID);
             await msg.delete();
         }
     }catch(err){
@@ -182,7 +188,7 @@ async function addCardMember(joinData){
         ////Fetch raid document
         const doc = await DBManager.getDocument(ActivityCollection,{id: joinData.activityid});
 
-        const membership = checkCardForMember(doc, joinData.member);
+        const membership = checkCardForMember(doc, joinData.interact.member);
 
         let max = "NA";
         if(joinData.joinMethod!=="alt"){
@@ -200,18 +206,19 @@ async function addCardMember(joinData){
         const updated = EmbedBuilder.from(oldembed)
         const fields = updated.data.fields;
         let cardString = "";
-        doc[joinData.joinMethod].push(joinData.member);
+        doc[joinData.joinMethod].push(joinData.interact.member.id);
         if(joinData.joinMethod!=="alt"){
             cardString = getListCapacityLiteral(doc[joinData.joinMethod].length,doc[maximums[joinData.joinMethod]])+"\n";
         }
         for(let member of doc[joinData.joinMethod]){//for every member that exists in that list (we have removed player to be removed)
-            cardString+=(member+"\n");//concatenate them onto string
+            const name = (await ServerBot.getMember(member)).displayName;
+            cardString+=(name+"\n");//concatenate them onto string
         }
         fields[fields.findIndex(field => field.name === joinData.joinMethod)].value=cardString;
 
         //Check for removal from other join lists, update card field for this and add to db update object
         if(membership!=="none"){
-            removePlayerFromJoinList(membership,update,doc[membership],joinData.member,fields,doc[maximums[membership]]);
+            await removePlayerFromJoinList(membership,update,doc[membership],joinData.member,fields,doc[maximums[membership]],joinData.interact);
         }
         ////Update database
         if(await DBManager.updateDocument(ActivityCollection,update)==="success"){
@@ -232,7 +239,7 @@ async function addCardMember(joinData){
             })
         }
     }catch(err){
-        console.log("[Activity Manager]: Unidentified error caught in adding card member:\n\t"+err.message);
+        console.log("[Activity Manager]: Unidentified error caught in adding card member:\n\t"+err.stack);
         joinData.interact.editReply(
             {
                 flags: MessageFlags.Ephemeral,
@@ -253,16 +260,16 @@ async function removeCardMember(leaveData){
 
     try{
         let doc = await getCardFromDB(leaveData.activityid);//get the document from DB
-        const membership = checkCardForMember(doc,leaveData.member);//check card for member, all join lists
+        const membership = checkCardForMember(doc,leaveData.interact.member);//check card for member, all join lists
 
-        let update = {mod:{},identifier: {id: leaveData.activityid}};//instantiate DB update object
+        let update = {identifier: {id: leaveData.activityid},mod:{}};//instantiate DB update object
 
         const msg = await (await ServerBot.getChannel(doc.channelID)).messages.fetch(doc.messageID);//fetch the card message
         const oldembed = msg.embeds[0];//create reference to card embed from message
         const updated = EmbedBuilder.from(oldembed)//create a new embed from the current one
         const fields = updated.data.fields;//grab reference to embed fields
         if(membership!=="none"){
-            removePlayerFromJoinList(membership,update,doc[membership],leaveData.member,fields,doc[maximums[membership]]);//modifies update object and embed fields to remove player from joined list
+            await removePlayerFromJoinList(membership,update,doc[membership],leaveData.member,fields,doc[maximums[membership]],leaveData.interact);//modifies update object and embed fields to remove player from joined list
         }else{//if membership does not exist
             leaveData.interact.editReply({
                 content:`You are not on this card already`,
@@ -290,7 +297,7 @@ async function removeCardMember(leaveData){
         }
 
     }catch(err){
-        console.log("[Activity Manager]: Unidentified error caught in removing card member:\n\t"+err.message);
+        console.log("[Activity Manager]: Unidentified error caught in removing card member:\n\t"+err.stack);
         leaveData.interact.editReply(
             {
                 flags: MessageFlags.Ephemeral,
@@ -343,6 +350,8 @@ async function editCard(interaction){
             await msg.edit({//edit message
                 embeds:[updated]//pass new/updated embed
             });
+            cancelActivityJobs(doc.id);
+            scheduleActivityJobs(doc.id, getUnixSeconds(edits.time)*1000);
             interaction.editReply({//good reply
                 content:`Card updated`,
                 flags: MessageFlags.Ephemeral
@@ -422,14 +431,18 @@ async function setRecur(){
 
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-async function deleteCard(deleteData){
+async function deleteCard(deleteData,override=false){
 
     console.log(`[Activity Manager]: Processing card deletion request by ${deleteData.member} for activity ${deleteData.activityid}`);
+
+    if(override){
+        console.log(`[Activity Manager]: Deletion request by module override`);
+    }
 
     try{
         const doc = await getCardFromDB(deleteData.activityid);
 
-        if(!verifyOwner(deleteData.interact,doc.owner)){
+        if(!verifyOwner(deleteData.interact,doc.owner,override)){
             console.log(`[Activity Manager]: ${deleteData.member} is not the owner of the card or an admin. Delete request rejected`);
             deleteData.interact.editReply({
                 content: "You are not the owner of this card or an admin",
@@ -442,17 +455,22 @@ async function deleteCard(deleteData){
         await msg.delete();
 
         await DBManager.deleteDocument(ActivityCollection,{id: deleteData.activityid});
+        if(!override){
+            deleteData.interact.editReply({
+                content: "Activity has been deleted",
+                flags: MessageFlags.Ephemeral
+            })
+        }
 
-        deleteData.interact.editReply({
-            content: "Activity has been deleted",
-            flags: MessageFlags.Ephemeral
-        })
     }catch(err){
-        console.log("[Activity Manager]: Unidentified error caught in removing card member:\n\t"+err.message);
-        deleteData.interact.editReply({
-            content: "Internal error, admin contacted",
-            flags: MessageFlags.Ephemeral
-        })
+        console.log("[Activity Manager]: Unidentified error caught in deleting card:\n\t"+err.message);
+        if(!override){
+            deleteData.interact.editReply({
+                content: "Internal error, admin contacted",
+                flags: MessageFlags.Ephemeral
+            })
+        }
+
     }
 
 }
@@ -467,19 +485,20 @@ async function deleteCard(deleteData){
  * @param listCapacity The maximum capacity of this join list
  *
  */
-function removePlayerFromJoinList(membership, update, joinedList, player, fields,listCapacity){
+async function removePlayerFromJoinList(membership, update, joinedList, player, fields,listCapacity,interact){
 
     let oldFieldIndex = null;//instantiate empty variable to hold value of field index for join list where player is located
 
     oldFieldIndex = fields.findIndex(field => field.name === membership);//find the index in embed fields where membership exists
     let cardJoinString = "";//instantiate empty string which will be used to build new field value
-    const index = joinedList.indexOf(player);//get the index in the join list where player is located
+    const index = joinedList.indexOf(interact.member.id);//get the index in the join list where player is located
     joinedList.splice(index, 1);//remove player from that list
     if(membership!=="alt"){
         cardJoinString = getListCapacityLiteral(joinedList.length,listCapacity)+"\n";
     }
     for(let member of joinedList){//for every member that exists in that list (we have removed player to be removed)
-        cardJoinString+=(member+"\n");//concatenate them onto string
+        const name = (await ServerBot.getMember(member)).displayName
+        cardJoinString+=(name+"\n");//concatenate them onto string
     }
     fields[oldFieldIndex].value = cardJoinString;//give field new value
     switch(membership){//switch statement to append to update object the document modification to send to mongoDB cluster
@@ -510,7 +529,7 @@ function checkCardForMember(doc, member){
     const lists = ["join","teacher","learner","alt"];
 
     for(let list of lists){
-        if(doc[list]?.includes(member)){
+        if(doc[list]?.includes(member.id)){
             return list
         }
     }
@@ -526,7 +545,7 @@ function checkCardForMember(doc, member){
  * @param update {{identifier:{any},mod:{}}} Update object with "mod" as property. This function will add a property to this property
  */
 function validateJoin(method,max,interact,player,update,joinList){
-    if(joinList?.includes(player)){//if this join list already includes the player
+    if(joinList?.includes(interact.member.id)){//if this join list already includes the player
         interact.editReply({//reply they are already included
             content:`You are already on this card as ${method}`,
             flags: MessageFlags.Ephemeral
@@ -540,7 +559,7 @@ function validateJoin(method,max,interact,player,update,joinList){
         });
         return false;
     }else{//add property to update object, updating
-        update.mod.$addToSet = {[method]: player};
+        update.mod.$addToSet = {[method]: interact.member.id};
         return true;
     }
 
@@ -551,8 +570,12 @@ function validateJoin(method,max,interact,player,update,joinList){
  * Small function to verify a button click came from the only user allowed to edit the card, unless the
  * button clicker is Azden or has the role Supreme General
  */
-function verifyOwner(interact, expected){
-    if(interact.member.displayName!==expected){
+function verifyOwner(interact, expected,override){
+    if(override){
+        return true;
+    }
+
+    if(interact.member.id===expected){
         for(let role of config.server.adminRoles){
             if(interact.member.roles.cache.has(role)){
                 return true;
@@ -561,6 +584,111 @@ function verifyOwner(interact, expected){
         return false;
     }
     return true;
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+ * Function to automatically notify people on a card when the event is close to start
+ * @returns {Promise<void>}
+ */
+async function autoNotifyJoined(activityID){
+    let joined = null;
+    let max=null;
+
+    console.log("[Activity Manager]: Sending activity notifications for activity "+activityID);
+
+    const doc = await getCardFromDB(activityID);
+
+    if(doc.hasOwnProperty("teacher")){
+        joined = [...doc.teacher,...doc.learner];
+        max = doc.maxTeacher+doc.maxLearn
+    }else{
+        joined = doc.join
+        max = doc.maxJoin
+    }
+    for(let memberid of joined){
+        const member = await ServerBot.getMember(memberid);
+        await member.send(`Activity ${doc.title} starting in 30 minutes`)
+    }
+    if(joined.length<max){
+        for(let memberid of doc.alt){
+            const member = await ServerBot.getMember(memberid);
+            member.send(`You are required as an alt on activity ${doc.title} starting in 30 minutes`)
+        }
+    }
+
+
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+ * Function to delete a card, utilised as part of a scheduled job
+ * @param activityID The ID of the activity to be deleted
+ * @returns {Promise<void>}
+ */
+async function autoDelete(activityID){
+    console.log("[Activity Manager]: Preparing to auto-delete activity "+activityID);
+    await deleteCard({
+        activityid: activityID,
+        member: "SCHEDULED DELETION",
+        interact: null
+    },true);
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+ *
+ * @param activityID The ID of the activity
+ * @param eventTime The scheduled event time in unix milliseconds (milliseconds since the unix epoch)
+ */
+function scheduleActivityJobs(activityID,eventTime){
+
+    const delay = config.activities.jobDelay//fetch configured job delay value (is a number in milliseconds)
+
+    if(eventTime - delay <= Date.now()){
+        console.log("[Activity Manager]: Cannot schedule auto-notify when notification window has passed");
+        return;
+    }
+    if(eventTime - delay <= Date.now()){
+        console.log("[Activity Manager: Cannot schedule auto-delete when event deletion window has passed");
+        return;
+    }
+
+    const timeout1 = setTimeout(async()=>{//schedule auto-notify
+        await autoNotifyJoined(activityID);
+    },(eventTime-delay)-Date.now())//notify sometime before event time
+    const timeout2 = setTimeout(async()=>{//schedule delete
+        await autoDelete(activityID);
+    },(eventTime+delay)-Date.now())//delete some time after event time
+
+    NotificationJobs[activityID]= timeout1
+    DeletionJobs[activityID]= timeout2
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+function cancelActivityJobs(activityID){
+    console.log("[Activity Manager: Preparing to cancel scheduled jobs for activity "+activityID);
+    const notifyID = NotificationJobs[activityID]
+    const deleteID = DeletionJobs[activityID]
+
+    if(notifyID){
+        clearTimeout(notifyID);
+        delete NotificationJobs[activityID];
+    }
+    if(deleteID){
+        clearTimeout(deleteID);
+        delete DeletionJobs[activityID];
+    }
+    console.log("[Activity Manager]: Deleted scheduled jobs for activity "+activityID);
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+ * Function called on start-up externally, to fetch all activities from the database and schedule auto-delete and auto-notify jobs
+ * @returns {Promise<void>}
+ */
+async function compileJobs(){
+    console.log("[Activity Manager]: Compiling auto jobs for all scheduled activities");
+    const docs = await DBManager.getAllDocuments(ActivityCollection);
+    for(let activity of docs){
+        scheduleActivityJobs(activity.id, activity.time*1000);
+    }
+    console.log("[Activity Manager]: Job compilation complete");
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 async function getCardFromDB(actid){
@@ -585,5 +713,6 @@ export default{
     removeCardMember,
     editCard,
     deleteCard,
-    getEditModal
+    getEditModal,
+    compileJobs,
 }

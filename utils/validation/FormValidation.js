@@ -36,7 +36,7 @@ export const CardValidation = {
     dateregex: /^\d{2}\/\d{2}$/,
     timeregex: /^([01]\d|2[0-3]):([0-5]\d)$/,
     //////////////////////////////////////////////////////////////////////////////////////
-    newCard(data,activityType){
+    newCard(data,activityType, sherpa){
 
         if(!this.validateTime(data.time)){
             throw new ActivityValidationError("date and/or time input is incorrect:\n\t- DD/MM HH:mm GMT/BST/CST etc.","ACVAL");
@@ -53,7 +53,7 @@ export const CardValidation = {
             }
 
         }else{
-            if(!this.validateMaxPlayers(data.players)){
+            if(!this.validateMaxPlayers(data.players,"NA")){
                 throw new ActivityValidationError("Maximum players must not exceeded activity maximum","ACVAL");
             }
         }
@@ -104,6 +104,9 @@ export const CardValidation = {
             let num = Number(players);
             if(isNaN(num)){
                 return false;
+            }
+            if(max==="NA"){
+                return true;
             }
             if(num>max || num<1){
                 return false;

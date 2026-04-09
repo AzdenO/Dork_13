@@ -52,6 +52,7 @@ async function startBot(){
         ActivityManager.assignActivityChannel(await ServerBot.getChannel(Components.Resources.getServerConfig().server.channels.raidCards))
         ModerationManager.assignAdminChannel(await ServerBot.getChannel(Components.Resources.getServerConfig().server.channels.modAppDump))
         console.log("[Server Management]: Reading initialisation tasks...");
+        await ActivityManager.compileJobs();//get the activity module to compile scheduled jobs for activities
         await initialisationTasks();
     }catch(err){
         console.log("[Server Management]: Error in Dork Start-up process:\n\t"+err.message);

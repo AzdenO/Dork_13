@@ -10,3 +10,7 @@ export function genCode(length=4){
 
     return Array.from(bytes, byte => chars[byte % chars.length]).join('');
 }
+
+export function genNumber(min,max){
+    return Math.floor(Math.random() * (max - min+1));
+}
