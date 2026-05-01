@@ -44,7 +44,7 @@ export const CardValidation = {
 
         if(activityType === "create-raid"|| activityType === "create-dungeon"){
             if(!this.validateSherpa(data.sherpa)){
-                throw new ActivityValidationError("sherpa option must be either yes/no. No capitals","ACVAL");
+                throw new ActivityValidationError("sherpa option must be either yes/no","ACVAL");
             }
             if(data.sherpa==="yes"){
                 if(!this.validateMaxPlayers(data.sherpanum)){
@@ -71,7 +71,7 @@ export const CardValidation = {
         const day = Number(datesplit[0]);
         const month = Number(datesplit[1]);
          try{
-            const date = dayjs.tz(timeparts[0]+" "+timeparts[1],"MM/DD HH/mm", this.timezones[timeparts[2]]);
+            const date = dayjs.tz(timeparts[0]+" "+timeparts[1],"MM/DD HH/mm", this.timezones[timeparts[2].toUpperCase()]);
          }catch(err){
             console.log("[Form Validation/Time Validation]: Dayjs failed to evaluate input ",err.message);
             return false;
@@ -91,9 +91,9 @@ export const CardValidation = {
     /////////////////////////////////////////////////////////////////////////////////
     validateSherpa(sherpa){
 
-      if(sherpa==="yes"){
+      if(sherpa.toLowerCase()==="yes"){
           return true;
-      }else if(sherpa==="no"){
+      }else if(sherpa.toLowerCase()==="no"){
           return true;
       }
       return false;

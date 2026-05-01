@@ -2,7 +2,9 @@
   "initTasks": {
     "sendRolesMessage": false,
     "sendLocationMessage": true,
-    "sendModApplyMessage": false
+    "sendModApplyMessage": true,
+    "sendRaidMasterApplyMessage": false,
+    "sendGameRolesMessage": false
   },
   "clanLinks": ["https://www.bungie.net/7/en/Clan/Profile/5410071","https://www.bungie.net/en/ClanV2?groupid=5416346"],
   "notificationRoles": {
@@ -30,6 +32,29 @@
       }
     ]
   },
+  "gameRoles": {
+    "messageChannel": "1498452354306150480",
+    "message": "# Game Roles\n\n ## **__Click a button below to gain access to the channels associated with each game__**\n Once done, you can use the role with '@' to notify people also interested in the game that you are looking to play\n## Division 2 \n Flush out the gangs from Brooklyn and Washington DC in a post-infection US\n## Minecraft Bedrock\n Join the Official Skill Issues Inc. Minecraft Realm and steal everyones diamonds (don't actually do that, Tom will get mad)\n## 7 Days to Die\n Play the ultimate Zombie Apocalypse Survival Game on the official Skill Issues Inc. 7 Days to Die server\n## Community Games\n Play any number of fun community games such as **Among Us, Phasmaphobia, R.E.P.O, Marvel Rivals, Fortnite and more**\n\n",
+    "roles": [
+      {
+        "id": "1496867178459299870",
+        "label": "Minecraft Bedrock"
+      },
+      {
+        "id": "1496867244985024523",
+        "label": "7 Days to Die"
+      },
+      {
+        "id": "1496867372823347251",
+        "label": "Division 2"
+      },
+      {
+        "id": "1497203520749961347",
+        "label": "Community Games"
+      }
+    ],
+    "buttonId": "otherGameApply"
+  },
   "server": {
     "serverID": "1428067161754042481",
     "channels": {
@@ -49,7 +74,7 @@
       "modAppDump": "1490459609524338965",
       "sherpaRuns": "1466419221507604522"
     },
-    "adminRoles": ["1464402837956984873","1428068427221696542"],
+    "adminRoles": ["1464402837956984873","1428068427221696542","1490385869029376071"],
     "modRole": "1490385869029376071"
   },
   "members": {
@@ -81,36 +106,82 @@
     }
   },
   "moderation": {
-    "apply_button_id": "moderate/apply",
-    "apply_message": "__**Click the button below to apply to become a Skill Issues Incorporated Moderator**__",
-    "formData": {
-      "buttonIds": {
-        "approve": "moderate/apply-approve/",
-        "reject": "moderate/apply-reject/"
-      },
-      "customid": "moderate-application",
-      "questions": [
-        {
-          "id": "q1",
-          "value": "Where are you based? [UK/US/EU/etc.]"
-        },
-        {
-          "id": "q2",
-          "value": "How often are you on discord?"
-        },
-        {
-          "id": "q3",
-          "value": "Are you invested in this community?"
-        },
-        {
-          "id": "q4",
-          "value": "Do you have good knowledge of discord?"
-        },
-        {
-          "id": "q5",
-          "value": "Tell us a bit about yourself"
+    "recruitment": {
+      "validTypes": ["moderator","raidmaster"],
+      "moderator": {
+        "role": "1490385869029376071",
+        "recruitID": "moderator",
+        "appDestination": "1490459609524338965",
+        "approveMessage": "Woah! Those power hogs over at Skill Issues Inc. actually approved your moderator application. Thanks for wanting to be part of the team my guy!",
+        "rejectMessage": "Apologies, your moderator application was rejected. They did the same thing to me, don't worry",
+        "apply_button_id": "moderate/recruit/moderator/apply",
+        "apply_message": "__**Click the button below to apply to become a Skill Issues Incorporated Moderator**__",
+        "apply_message_dest": "1490353743143632967",
+        "formData": {
+          "buttonIds": {
+            "approve": "moderate/recruit/moderator/apply-approve",
+            "reject": "moderate/recruit/moderator/apply-reject"
+          },
+          "customid": "moderate-application",
+          "questions": [
+            {
+              "id": "q1",
+              "value": "Where are you based? [UK/US/EU/etc.]"
+            },
+            {
+              "id": "q2",
+              "value": "How often are you on discord?"
+            },
+            {
+              "id": "q3",
+              "value": "Are you invested in this community?"
+            },
+            {
+              "id": "q4",
+              "value": "Do you have good knowledge of discord?"
+            },
+            {
+              "id": "q5",
+              "value": "Tell us a bit about yourself"
+            }
+          ]
         }
-      ]
+      },
+      "raidmaster": {
+        "recruitID": "raidmaster",
+        "role": "1466421197309874412",
+        "appDestination": "1499764384644202496",
+        "approveMessage": "You are now the pinnacle of RAD, a Raid Master",
+        "rejectMessage": "Sooooo.....you aren't gonna be a Raid Master, sorry my guy. Don't hate the messenger. Definetly throw shade at Azden though",
+        "apply_button_id": "moderate/recruit/raidmaster/apply",
+        "apply_message": "__**Click the button below to apply to be a Raid Master**__",
+        "apply_message_dest": "1483821573981995099",
+        "formData": {
+          "buttonIds": {
+            "approve": "moderate/recruit/raidmaster/apply-approve",
+            "reject": "moderate/recruit/raidmaster/apply-reject"
+          },
+          "customid": "raidmaster-application",
+          "questions": [
+            {
+              "id": "q1",
+              "value": "Where are you based? [UK/US/EU/etc.]"
+            },
+            {
+              "id": "q2",
+              "value": "Please link your raid report"
+            },
+            {
+              "id": "q3",
+              "value": "Can you create one card every two weeks?"
+            },
+            {
+              "id": "q4",
+              "value": "Are you willing to sherpa newbies?"
+            }
+          ]
+        }
+      }
     }
   },
   "activities": {

@@ -27,6 +27,7 @@ export default class Dork{
             await this.bot.login(process.env.TOKEN);
             await this.awaitReady();
             console.log("[Dork-13]: Successfully connected to the server");
+            this.setAutoWarns();
             return true;
         }catch(e){
             console.log("[Dork-13]: Failed to connect to server:\n\t"+e.message);
@@ -73,4 +74,17 @@ export default class Dork{
         })
     }
     //////////////////////////////////////////////////////////////////////////////////
+    setAutoWarns(){
+        this.bot.on("error",(err)=>{
+            console.log("[Dork-13]: Error detected: "+err)
+            console.log("[Dork-13]: Status "+this.bot.ws.status);
+        });
+        this.bot.on("warn",(err)=>{
+            console.log("[Dork-13]: Warning detected: "+err);
+            console.log("[Dork-13]: Status "+this.bot.ws.status);
+        });
+        this.bot.on("debug",(err)=>{
+            console.log("[Dork-13]: Debug detected: "+err);
+        })
+    }
 }

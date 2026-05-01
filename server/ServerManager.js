@@ -29,7 +29,7 @@ function init(dependencies, bot){
     ModerationManager.init(Components.Resources, ServerBot);
 
     console.log("[Server Management]: initialising messaging service");
-    Messaging.init(Components.Resources);
+    Messaging.init(Components.Resources,ServerBot);
 
     console.log("[Server Management]: Assigning listeners to internal events");
     assignServerListeners();
@@ -50,7 +50,6 @@ async function startBot(){
         console.log("[Server Management]: Collecting server manifest");
         await collectServerManifest();
         ActivityManager.assignActivityChannel(await ServerBot.getChannel(Components.Resources.getServerConfig().server.channels.raidCards))
-        ModerationManager.assignAdminChannel(await ServerBot.getChannel(Components.Resources.getServerConfig().server.channels.modAppDump))
         console.log("[Server Management]: Reading initialisation tasks...");
         await ActivityManager.compileJobs();//get the activity module to compile scheduled jobs for activities
         await initialisationTasks();
@@ -86,6 +85,20 @@ async function initialisationTasks(){
             Components.Resources.getServerConfig().server.channels.modApply
         ));
         console.log("[Server Management]: Mod application message successfully sent");
+    }
+    if(Components.Resources.getServerConfig().initTasks.sendGameRolesMessage){
+        console.log("[Server Management/Tasks]: Game roles message required, sending...");
+        await Messaging.sendGamesRoleMessage(
+            await ServerBot.getChannel(Components.Resources.getServerConfig().gameRoles.messageChannel),
+            Components.Resources.getServerConfig().gameRoles.roles,
+            Components.Resources.getServerConfig().gameRoles.message,
+            Components.Resources.getServerConfig().gameRoles.buttonId
+        )
+    }
+    if(Components.Resources.getServerConfig().initTasks.sendRaidMasterApplyMessage){
+        console.log("[Server Management/Tasks]: Raid master apply message required, sending...");
+        await Messaging.sendRaidMasterApplyMessage();
+        console.log("[Server Management]: Raid Master application message successfully sent");
     }
 }
 /////////////////////////////////////////////////////////////////////////
@@ -126,18 +139,42 @@ async function assignServerListeners(){
         ActivityManager.editCard(interact);
     });
     Components.ServerBus.on("mod-apply",(data)=>{
+        data.type = "moderator"
+        ModerationManager.sendModApplyForm(data);
+    });
+    Components.ServerBus.on("raidmaster-apply",(data)=>{
+        data.type = "raidmaster";
         ModerationManager.sendModApplyForm(data);
     });
     Components.ServerBus.on("mod-apply-submit",(data)=>{
         ModerationManager.processApplication({
             member: data.member,
-            interact: data
+            interact: data,
+            type: "moderator"
         });
     });
+    Components.ServerBus.on("raidmaster-apply-submit",(data)=>{
+        ModerationManager.processApplication({
+            member: data.member,
+            interact: data,
+            type: "raidmaster"
+
+        })
+    });
     Components.ServerBus.on("mod-apply-approve",(data)=>{
+        data.type = "moderator";
         ModerationManager.approveMod(data)
     });
     Components.ServerBus.on("mod-apply-reject",(data)=>{
+        data.type = "moderator";
+        ModerationManager.rejectMod(data)
+    })
+    Components.ServerBus.on("raidmaster-apply-approve",(data)=>{
+        data.type = "raidmaster";
+        ModerationManager.approveMod(data)
+    });
+    Components.ServerBus.on("raidmaster-apply-reject",(data)=>{
+        data.type = "raidmaster";
         ModerationManager.rejectMod(data)
     })
 }

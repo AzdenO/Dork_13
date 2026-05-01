@@ -1,11 +1,12 @@
 {
   "name": "dork_13",
   "type": "module",
-  "version": "1.0.0",
+  "version": "1.2",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "run": "node index.js"
+    "run": "NODE_OPTIONS=--dns-result-order=ipv4first node index.js",
+    "start": "cross-env NODE_OPTIONS=--dns-result-order=ipv4first node index.js"
   },
   "keywords": [],
   "author": "",
@@ -17,5 +18,8 @@
     "dotenv": "^17.3.1",
     "mongodb": "^7.1.0",
     "node-cron": "^4.2.1"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0"
   }
 }

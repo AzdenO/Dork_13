@@ -17,6 +17,7 @@ import LocationCommand from "./functions/SetLocation.js";
 import NotificationAssignment from "./functions/NotificationRoles.js"
 import EventModalCreate from "./functions/EventModal.js";
 import JoinClanFunc from "./functions/JoinClan.js";
+import GameAssignment from "./functions/GameRoles.js";
 ////////////////////////////////////////////////////////////////////////////////////
 function init(bot, resources, bus){
     registerCommands(bot);
@@ -40,7 +41,7 @@ async function parseCommand(interaction){
             await EventModalCreate(interaction);
             break;
         case "join-clan":
-            await JoinClanFunc(interaction, BotResources.getServerConfig.clanLinks);
+            await JoinClanFunc(interaction, BotResources.getServerConfig().clanLinks);
             break;
         default:
             console.log("[Command Handler]: No such command /"+interaction.commandName);
@@ -57,6 +58,9 @@ async function parseButton(interaction){
     switch(btnData[0]){
         case "notifAssign":
             NotificationAssignment(interaction,btnData[1],MessageFlags);
+            break;
+        case "otherGameApply":
+            GameAssignment(interaction,btnData[1]);
             break;
         case "activity":
             if(btnData[1]==="teacher" || btnData[1]==="learner" || btnData[1]==="join" || btnData[1]==="alt"){
@@ -90,25 +94,57 @@ async function parseButton(interaction){
             }
             break;
         case "moderate":
-            if(btnData[1]==="apply"){
-                ServerBus.emit("mod-apply",{
-                    member: interaction.member,
-                    interact: interaction
-                })
-            }
-            if(btnData[1]==="apply-approve"){
-                ServerBus.emit("mod-apply-approve",{
-                    member: interaction.member,
-                    interact: interaction,
-                    appUser: btnData[2]
-                })
-            }
-            if(btnData[1]==="apply-reject"){
-                ServerBus.emit("mod-apply-reject",{
-                    member: interaction.member,
-                    interact: interaction,
-                    appUser: btnData[2]
-                })
+            if(btnData[1]==="recruit"){
+                switch(btnData[2]){
+                    case "moderator":
+                        if(btnData[3]==="apply"){
+                            ServerBus.emit("mod-apply",{
+                                member: interaction.member,
+                                interact: interaction,
+                            })
+                        }
+                        if(btnData[3]==="apply-approve"){
+                            await interaction.deferReply({flags: MessageFlags.Ephemeral});
+                            ServerBus.emit("mod-apply-approve",{
+                                member: interaction.member,
+                                interact: interaction,
+                                appUser: btnData[4]
+                            })
+                        }
+                        if(btnData[3]==="apply-reject"){
+                            await interaction.deferReply({flags: MessageFlags.Ephemeral});
+                            ServerBus.emit("mod-apply-reject",{
+                                member: interaction.member,
+                                interact: interaction,
+                                appUser: btnData[4]
+                            })
+                        }
+                        break;
+                    case "raidmaster":
+                        if(btnData[3]==="apply"){
+                            ServerBus.emit("raidmaster-apply",{
+                                member: interaction.member,
+                                interact: interaction,
+                            })
+                        }
+                        if(btnData[3]==="apply-approve"){
+                            await interaction.deferReply({flags: MessageFlags.Ephemeral});
+                            ServerBus.emit("raidmaster-apply-approve",{
+                                member: interaction.member,
+                                interact: interaction,
+                                appUser: btnData[4]
+                            })
+                        }
+                        if(btnData[3]==="apply-reject"){
+                            await interaction.deferReply({flags: MessageFlags.Ephemeral});
+                            ServerBus.emit("raidmaster-apply-reject",{
+                                member: interaction.member,
+                                interact: interaction,
+                                appUser: btnData[4]
+                            })
+                        }
+                        break;
+                }
             }
             break;
 

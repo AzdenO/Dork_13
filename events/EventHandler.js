@@ -71,6 +71,8 @@ async function interactionListener(interaction){
             components.ServerBus.emit("activity-edit",interaction);
         }else if(interaction.customId==="moderate-application"){
             components.ServerBus.emit("mod-apply-submit",interaction);
+        }else if(interaction.customId==="raidmaster-application"){
+            components.ServerBus.emit("raidmaster-apply-submit",interaction);
         }
     }
 }

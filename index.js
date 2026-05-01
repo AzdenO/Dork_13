@@ -3,10 +3,11 @@ import DotEnv from "dotenv";
 import Commands from "./commands/CommandParser.js";
 import Resources from "./resources/Resources.js";
 import EventHandler from "./events/eventHandler.js";
-import Dork from "./bot/Dork13.js"
+import Dork from "./bot/Dork13.js";
 import ServerManager from "./server/ServerManager.js";
 import ServerBus from "./events/emitter/ServerEmitter.js";
 import DatabaseManager from "./database/Database.js";
+import {execSync} from "child_process";
 ///////////////////////////////////////////////////////////////////////////////////////
 
 /**
@@ -76,4 +77,11 @@ ServerManager.init({
 //////////////////////////////////////////////////////////////////////////////////////
 ServerManager.startBot();
 
+process.on("uncaughtException", (err) => {
+    console.error("[Main]: Uncaught exception, process exit");
+    console.error(err)
+    execSync(`powershell -c (New-Object Media.SoundPlayer "O:/Storage/Dev/Level_4/dork_13/assets/audio/shutDown.wav").playSync();`)
+
+
+})
 
