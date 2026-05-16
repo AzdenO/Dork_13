@@ -14,9 +14,10 @@ export default class Dork{
      * @param client The discord Client object associated with our bot
      * @param config
      */
-    constructor(client, config){
+    constructor(client, config,logger){
         this.bot = client;
         this.config = config;
+        this.logger = logger;
     }
     ///////////////////////////////////////////////////////////////////////////////////
     /**
@@ -26,11 +27,11 @@ export default class Dork{
         try{
             await this.bot.login(process.env.TOKEN);
             await this.awaitReady();
-            console.log("[Dork-13]: Successfully connected to the server");
+            this.logger("Dork-13","Successfully connected to the server","INFO");
             this.setAutoWarns();
             return true;
         }catch(e){
-            console.log("[Dork-13]: Failed to connect to server:\n\t"+e.message);
+            this.logger("Dork-13","Failed to connect to server:\n\t"+e.message,"ERROR");
             return false;
         }
 
@@ -76,15 +77,15 @@ export default class Dork{
     //////////////////////////////////////////////////////////////////////////////////
     setAutoWarns(){
         this.bot.on("error",(err)=>{
-            console.log("[Dork-13]: Error detected: "+err)
-            console.log("[Dork-13]: Status "+this.bot.ws.status);
+            this.logger("Dork-13","Error detected: "+err,"ERROR");
+            this.logger("Dork-13","Status "+this.bot.ws.status,"WARN");
         });
         this.bot.on("warn",(err)=>{
-            console.log("[Dork-13]: Warning detected: "+err);
-            console.log("[Dork-13]: Status "+this.bot.ws.status);
+            this.logger("Dork-13","Warning detected: "+err,"WARN");
+            this.logger("Dork-13","Status "+this.bot.ws.status,"WARN");
         });
         this.bot.on("debug",(err)=>{
-            console.log("[Dork-13]: Debug detected: "+err);
+            this.logger("Dork-13","Debug detected: "+err,"DEBUG");
         })
     }
 }

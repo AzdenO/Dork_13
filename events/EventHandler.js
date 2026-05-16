@@ -10,6 +10,7 @@ import EventEmitter from "events"
 
 //import event functions
 import Welcome from "./functions/Welcome.js";
+import Logger from "../server/logging/Logger.js";
 
 /**
  * define global variables
@@ -36,12 +37,15 @@ function assignListeners(bot){
     });
 
     //Message Event
-    bot.on(components.Discord.Events.MessageCreate, async(msg)=>{
-        await messageListener(msg);
+    bot.on(components.Discord.Events.MessageCreate, (msg)=>{
+        messageListener(msg);
     });
 
     bot.on(components.Discord.Events.InteractionCreate, async(interaction)=>{
         await interactionListener(interaction);
+    });
+    bot.on(components.Discord.Events.GuildMemberUpdate, async(guildMember)=>{
+
     });
 }
 ///////////////////////////////////////////////////////////////////////////////////
@@ -52,22 +56,21 @@ async function messageListener(msg){
 async function interactionListener(interaction){
     if(interaction.isChatInputCommand()) {
         components.ServerBus.emit(ServerEvents.COMMAND,interaction);
-        console.log(`[Event Handler]: Command /${interaction.commandName} used by ` + interaction.member.nickname)
+        components.Logger("Event Handler",`Command /${interaction.commandName} used by ` + interaction.member.displayName,"INFO")
         await components.CommandsParser.parseCommand(interaction);
     }
     else if(interaction.isButton()){
         components.ServerBus.emit(ServerEvents.BUTTON,interaction);
-        console.log("[Event Handler]: Button used for "+(interaction.customId.split("/"))[0]);
+        components.Logger("Event Handler","Button used for "+(interaction.customId.split("/"))[0]+" by "+interaction.member.displayName,"INFO");
         await components.CommandsParser.parseButton(interaction);
     }
     else if(interaction.isModalSubmit()){
-        console.log("[Event Handler]: Form submission from "+interaction.member.user.username);
-        console.log(interaction.customId);
+        components.Logger("Event Handler","Form submission from "+interaction.member.user.username+" with ID "+interaction.customId,"INFO");
         if(["create-raid","create-dungeon","custom"].includes(interaction.customId)){
-            console.log("[Event Handler]: Form submission for event creation by "+interaction.member.user.username);
+            components.Logger("Event Handler","Form submission for event creation by "+interaction.member.user.username,"INFO");
             components.ServerBus.emit("event-create",interaction);
         }else if(interaction.customId.split("/")[0]==="activity"){
-            console.log("[Event Handler]: Form submission for destination service Activity");
+            components.Logger("Event Handler","Form submission for destination service Activity","INFO");
             components.ServerBus.emit("activity-edit",interaction);
         }else if(interaction.customId==="moderate-application"){
             components.ServerBus.emit("mod-apply-submit",interaction);
@@ -79,7 +82,7 @@ async function interactionListener(interaction){
 ///////////////////////////////////////////////////////////////////////////////////
 async function memberJoin(member){
     components.ServerBus.emit(ServerEvents.NEWMEMBER,member);
-    console.log(`[Event Handler]: New Member ${member.user.username} has joined Skill Issues Inc.`);
+    components.Logger("Event Handler",`New Member ${member.user.username} has joined Skill Issues Inc.`,"INFO");
     Welcome(member,components.Resources.getWelcomes(),components.Resources.getAdvisoryChannels());
 }
 ///////////////////////////////////////////////////////////////////////////////////

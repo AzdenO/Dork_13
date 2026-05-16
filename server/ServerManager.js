@@ -10,10 +10,11 @@ let Components = null;
 let ServerBot = null;
 let Server = null;
 let ServerEvents = null;
+let LoggingMachine = null;
 
 import Messaging from "./messaging/Messaging.js";
 import ActivityManager from "./activities/Activities.js";
-import ModerationManager from "./moderation/Moderator.js"
+import ModerationManager from "./moderation/Moderator.js";
 /////////////////////////////////////////////////////////////////////////
 /**
  * Initialisation function for server module
@@ -25,36 +26,34 @@ function init(dependencies, bot){
     ServerBot = bot;
     ServerEvents = Components.Resources.getEventsConfig().ServerEvents;
 
-    console.log("[Server Management]: initialising moderation service");
-    ModerationManager.init(Components.Resources, ServerBot);
+    Components.Logger("Server Management","initialising moderation service","INFO");
+    ModerationManager.init(Components.Resources, ServerBot,Components.Logger);
 
-    console.log("[Server Management]: initialising messaging service");
-    Messaging.init(Components.Resources,ServerBot);
+    Components.Logger("Server Management","initialising messaging service","INFO");
+    Messaging.init(Components.Resources,ServerBot,Components.Logger);
 
-    console.log("[Server Management]: Assigning listeners to internal events");
-    assignServerListeners();
+    Components.Logger("Server Management","Starting activities service...","INFO");
+    ActivityManager.init(Components.DBManager,Components.Resources,Components.Resources.getServerConfig(),ServerBot,Components.Logger);
 
-    console.log("[Server Management]: Starting activities service...");
-    ActivityManager.init(Components.DBManager,Components.Resources,Components.Resources.getServerConfig(),ServerBot);
-
-    console.log("[Server Management]: Successfully initialised");
+    Components.Logger("Server Management","Successfully initialised","INFO");
 }
 /////////////////////////////////////////////////////////////////////////
 async function startBot(){
-    console.log("[Server Management]: Connecting DorkBot to server");
+    Components.Logger("Server Management","Connecting DorkBot to server","INFO");
     if(!await ServerBot.connect()){
-        console.log("[Server Management]: ServerBot failed to connect");
+        Components.Logger("Server Management","ServerBot failed to connect","ERROR");
         return;
     }
+    Components.Logger("Server Management","Assigning listeners to internal events","INFO");
+    assignServerListeners();
     try{
-        console.log("[Server Management]: Collecting server manifest");
+        Components.Logger("Server Management","Collecting server manifest","INFO");
         await collectServerManifest();
         ActivityManager.assignActivityChannel(await ServerBot.getChannel(Components.Resources.getServerConfig().server.channels.raidCards))
-        console.log("[Server Management]: Reading initialisation tasks...");
-        await ActivityManager.compileJobs();//get the activity module to compile scheduled jobs for activities
+        Components.Logger("Server Management","Reading initialisation tasks...","INFO");
         await initialisationTasks();
     }catch(err){
-        console.log("[Server Management]: Error in Dork Start-up process:\n\t"+err.message);
+        Components.Logger("Server Management","Error in Dork Start-up process:\n\t"+err.message,"ERROR");
     }
 
 }
@@ -69,25 +68,25 @@ async function terminateBot(){
  */
 async function initialisationTasks(){
     if(Components.Resources.getServerConfig().initTasks.sendRolesMessage){
-        console.log("[Server Management/Tasks]: Roles message required, sending...");
+        Components.Logger("Server Management","Roles message required, sending...","INFO");
         const channel = await ServerBot.getChannel(Components.Resources.getServerConfig().server.channels.notificationRoles)
         const roles = Components.Resources.getServerConfig().notificationRoles.roles;
         const message = Components.Resources.getServerConfig().notificationRoles.message;
         await Messaging.sendNotifRolesMessage(channel,roles,message);
     }
     if(Components.Resources.getServerConfig().initTasks.sendLocationMessage){
-        console.log("[Server Management/Tasks]: User location message required, sending...");
+        Components.Logger("Server Management","User location message required, sending...","INFO");
 
     }
     if(Components.Resources.getServerConfig().initTasks.sendModApplyMessage){
-        console.log("[Server Management/Init Tasks]: Mod application message required, sending...");
+        Components.Logger("Server Management","Mod application message required, sending...","INFO");
         await Messaging.sendModApplyMessage(await ServerBot.getChannel(
             Components.Resources.getServerConfig().server.channels.modApply
         ));
-        console.log("[Server Management]: Mod application message successfully sent");
+        Components.Logger("Server Management","Mod application message successfully sent","INFO");
     }
     if(Components.Resources.getServerConfig().initTasks.sendGameRolesMessage){
-        console.log("[Server Management/Tasks]: Game roles message required, sending...");
+        Components.Logger("Server Management","Game roles message required, sending...","INFO");
         await Messaging.sendGamesRoleMessage(
             await ServerBot.getChannel(Components.Resources.getServerConfig().gameRoles.messageChannel),
             Components.Resources.getServerConfig().gameRoles.roles,
@@ -96,10 +95,12 @@ async function initialisationTasks(){
         )
     }
     if(Components.Resources.getServerConfig().initTasks.sendRaidMasterApplyMessage){
-        console.log("[Server Management/Tasks]: Raid master apply message required, sending...");
+        Components.Logger("Server Management","Raid master apply message required, sending...","INFO");
         await Messaging.sendRaidMasterApplyMessage();
-        console.log("[Server Management]: Raid Master application message successfully sent");
+        Components.Logger("Server Management","Raid Master application message successfully sent","INFO");
     }
+    ActivityManager.compileJobs();//get the activity module to compile scheduled jobs for activities
+
 }
 /////////////////////////////////////////////////////////////////////////
 /**
@@ -176,11 +177,20 @@ async function assignServerListeners(){
     Components.ServerBus.on("raidmaster-apply-reject",(data)=>{
         data.type = "raidmaster";
         ModerationManager.rejectMod(data)
+    });
+    Components.ServerBus.on("log-event",(message) => {
+        if(Components.Resources.getServerConfig().flags.logAsMessage){
+            Messaging.sendLogMessage(message);
+        }
     })
 }
 /////////////////////////////////////////////////////////////////////////
 function registerMessage(msg){
-    console.log("[Server Management]: Message registered in channel: "+msg.channel.name);
+    if(msg.channel.id===Components.Resources.getServerConfig().server.channels.botLogs){
+        return
+    }else{
+        Components.Logger("Server Management","Message registered in channel: "+msg.channel.name,"INFO");
+    }
 }
 /////////////////////////////////////////////////////////////////////////
 

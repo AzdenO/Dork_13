@@ -1,11 +1,13 @@
 let RecruitmentConfig = null;
 let appEmbed = null;
 let Dork_13 = null;
+let Logger = null;
 /////////////////////////////////////////////////////////////////////////
-function init(recruitconf,appembed,dork){
+function init(recruitconf,appembed,dork,logger){
     RecruitmentConfig = recruitconf
     appEmbed = appembed
     Dork_13 = dork
+    Logger = logger
 }
 /////////////////////////////////////////////////////////////////////////
 import {
@@ -27,7 +29,7 @@ function sendRecruitForm(recruitType){
 
     validateApplicationType(recruitType);
 
-    console.log("[Moderation Service/Recruitment] sending recruitment form for "+recruitType);
+    Logger("Recruitment Service","sending recruitment form for "+recruitType,"INFO");
 
     const form = new ModalBuilder();
     const formConfig = RecruitmentConfig[recruitType].formData;
@@ -51,37 +53,37 @@ async function approveRecruitment(appData){
 
     validateApplicationType(appData.type)
 
-    console.log("[Moderation Service]: Approving recruitment application for " +appData.type);
+    Logger("Recruitment Service","Approving recruitment application for " +appData.type,"INFO");
 
     try{
         const member = await Dork_13.getMember(appData.appUser);
         await member.roles.add(RecruitmentConfig[appData.type].role);
         await member.send(RecruitmentConfig[appData.type].approveMessage);
-        console.log(`[Moderation Service]: Approved ${appData.type} application for ${member.displayName}`);
+        Logger("Recruitment Service",`Approved ${appData.type} application for ${member.displayName}`,"INFO");
         appData.interact.editReply({
             content: `Successfully approved ${appData.type} application`,
             flags: MessageFlags.Ephemeral
         })
     }catch(e){
-        console.log(`[Moderation Service]: Failed to approve ${appData.type} application:\n\t`+e.message);
+        Logger("Recruitment Service",`Failed to approve ${appData.type} application:\n\t`+e.message,"ERROR");
     }
 }
 ////////////////////////////////////////////////////////////////////////
 async function rejectRecruitment(appData){
     validateApplicationType(appData.type);
 
-    console.log("[Moderation Service]: Rejecting recruitment application for " +appData.type);
+    Logger("Recruitment Service","Rejecting recruitment application for " +appData.type,"INFO");
 
     try{
         const member = await Dork_13.getMember(appData.appUser);
         await member.send(RecruitmentConfig[appData.type].rejectMessage);
-        console.log(`[Moderation Service]: Rejected ${appData.type} application for ${member.displayName}`);
+        Logger("Recruitment Service",`Rejected ${appData.type} application for ${member.displayName}`,"INFO");
         appData.interact.editReply({
             content: `Successfully rejected ${appData.type} application`,
             flags: MessageFlags.Ephemeral
         })
     }catch(e){
-        console.log("[Moderation Service]: Failed to reject application:\n\t"+e.message);
+        Logger("Recruitment Service","Failed to reject application:\n\t"+e.message,"ERROR");
     }
 }
 ////////////////////////////////////////////////////////////////////////
@@ -90,7 +92,7 @@ async function processApplication(appData){
 
     const formConfig = RecruitmentConfig[appData.type].formData;
 
-    console.log("[Moderation Service]: Application submitted");
+    Logger("Recruitment Service",`Application submitted for ${appData.type} by ${appData.member.displayName}`,"INFO");
 
     let card = JSON.parse(JSON.stringify(appEmbed));
 
@@ -127,9 +129,9 @@ async function processApplication(appData){
             content:"Your application has been sent",
             flags: MessageFlags.Ephemeral
         });
-        console.log("[Moderation Service]: Application results forwarded to admin channel");
+        Logger("Recruitment Service",`Application results forwarded to channel "${destination.name}"`,"INFO");
     }catch(e){
-        console.log("[Moderation Service]: Error in sending application results\n\t"+e.message);
+        Logger("Recruitment Service","Error in sending application results\n\t"+e.message,"ERROR");
     }
 }
 ////////////////////////////////////////////////////////////////////////

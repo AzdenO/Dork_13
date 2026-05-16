@@ -1,12 +1,15 @@
 {
   "initTasks": {
     "sendRolesMessage": false,
-    "sendLocationMessage": true,
-    "sendModApplyMessage": true,
+    "sendLocationMessage": false,
+    "sendModApplyMessage": false,
     "sendRaidMasterApplyMessage": false,
     "sendGameRolesMessage": false
   },
-  "clanLinks": ["https://www.bungie.net/7/en/Clan/Profile/5410071","https://www.bungie.net/en/ClanV2?groupid=5416346"],
+  "flags": {
+    "logAsMessage": true
+  },
+  "clanLinks": ["https://www.bungie.net/en/ClanV2?groupid=5416346"],
   "notificationRoles": {
     "message": "# Notification Roles\n\n ## __**Click a button below to add or remove one of these roles**__. \nAll members are advised to tag these roles in channels for more activity specific LFG notification",
     "roles": [
@@ -72,7 +75,8 @@
       "raidCards": "1428139756427939946",
       "modApply": "1490353743143632967",
       "modAppDump": "1490459609524338965",
-      "sherpaRuns": "1466419221507604522"
+      "sherpaRuns": "1466419221507604522",
+      "botLogs": "1500935370018127902"
     },
     "adminRoles": ["1464402837956984873","1428068427221696542","1490385869029376071"],
     "modRole": "1490385869029376071"
@@ -107,7 +111,7 @@
   },
   "moderation": {
     "recruitment": {
-      "validTypes": ["moderator","raidmaster"],
+      "validTypes": ["moderator","raidmaster","dungeonmaster"],
       "moderator": {
         "role": "1490385869029376071",
         "recruitID": "moderator",
@@ -155,7 +159,7 @@
         "rejectMessage": "Sooooo.....you aren't gonna be a Raid Master, sorry my guy. Don't hate the messenger. Definetly throw shade at Azden though",
         "apply_button_id": "moderate/recruit/raidmaster/apply",
         "apply_message": "__**Click the button below to apply to be a Raid Master**__",
-        "apply_message_dest": "1483821573981995099",
+        "apply_message_dest": "1499776950376337471",
         "formData": {
           "buttonIds": {
             "approve": "moderate/recruit/raidmaster/apply-approve",
@@ -182,6 +186,41 @@
           ]
         }
       }
+    }
+  },
+  "dungeonmaster": {
+    "role": "1490385869029376071",
+    "recruitID": "dungeonmaster",
+    "appDestination": "1490459609524338965",
+    "approveMessage": "Mate! Its time to go a plundering, you're a Dungeon Master now, kinda like D&D but with less Chris Pine",
+    "rejectMessage": "Sorry mate, couldnt get you in as a dungeon master over there",
+    "apply_button_id": "moderate/recruit/dungeonmaster/apply",
+    "apply_message": "__**Click the button below to apply to become a Skill Issues Incorporated Dungeon Master**__",
+    "apply_message_dest": "1490353743143632967",
+    "formData": {
+      "buttonIds": {
+        "approve": "moderate/recruit/dungeonmaster/apply-approve",
+        "reject": "moderate/recruit/dungeonmaster/apply-reject"
+      },
+      "customid": "dungeonmaster-application",
+      "questions": [
+        {
+          "id": "q1",
+          "value": "Where are you based? [UK/US/EU/etc.]"
+        },
+        {
+          "id": "q2",
+          "value": "Link us your Dungeon Report"
+        },
+        {
+          "id": "q3",
+          "value": "Can you make one dungeon card every two weeks?"
+        },
+        {
+          "id": "q4",
+          "value": "Willing to teach others yeah?"
+        }
+      ]
     }
   },
   "activities": {

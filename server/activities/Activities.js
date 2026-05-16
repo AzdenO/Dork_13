@@ -17,6 +17,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat.js'//this is all d
 import utc from 'dayjs/plugin/utc.js'
 import timezone from 'dayjs/plugin/timezone.js'
 import dayjs from "dayjs";
+import DorkTime from "../../utils/time/Time.js"
 
 //Configure dayjs
 dayjs.extend(customParseFormat);
@@ -30,6 +31,7 @@ let Channel = null;
 let ActivityCollection = null;//the collection for activities on the database
 let config = null;//variable to hold server config
 let ServerBot = null;//variable to hold server bot class instance
+let Logger = null;
 
 let processing = false;//ignore this, will get rid of at some point
 
@@ -39,7 +41,7 @@ const maximums = {//const object with property name of join method, and a value 
     join: "maxJoin",
 }
 
-let timezones = {//map of timezones, mapping to dayjs valid strings for timezones
+const timezones = {//map of timezones, mapping to dayjs valid strings for timezones
     GMT: "Europe/London",
     BST: "Europe/London",
     EST: "America/New_York",
@@ -60,12 +62,16 @@ let DeletionJobs = {}//dictionary to hold references to scheduled notification j
  * @param serverBot The instance of the Dork class, an layer of abstraction that wraps over the majority of the discord library
  */
 
-async function init(db,resources,conf,serverBot){
+async function init(db,resources,conf,serverBot,logger){
     DBManager = db || {};//if db null or undefined, an empty object
     config = conf || {};//if conf null or undefined, an empty object
     Embeds = resources.getEmbeds();//assign embeds
     ActivityCollection = await DBManager.getCollection("raids","events");//get the raids collection from the DB. This needs removing and a single identifier such as "activities" used to let the db know what collection it will need to use. Instead of system edges requiring to store a reference to their own collection
     ServerBot = serverBot;//assign server bot to globally accessible variable
+    Logger = logger;
+
+    scheduleReset();
+
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -83,7 +89,7 @@ function assignActivityChannel(channel){
  */
 async function createActivityCard(interaction){
 
-    console.log("[Activity Manager]: Processing new activity request...");//log line
+    Logger("Activity Manager","Processing new activity request...","INFO");//log line
 
     processing = true;//ignore this flag, does nothing, needs removing
     let destinationChannel = null;//empty function global to assign the channel where the card will be send
@@ -123,7 +129,7 @@ async function createActivityCard(interaction){
         }
         ////Validate input
         CardValidation.newCard(valData,interaction.customId, sherpa);
-        console.log("Success");
+        Logger("Activity Manager",`New activity ${interaction.fields.getTextInputValue("event_name")} created successfully`,"INFO");
 
 
         ////Create card
@@ -161,7 +167,7 @@ async function createActivityCard(interaction){
                 flags: MessageFlags.Ephemeral//only the submitter can see the bots reply
             });
         }else{//if fail to send the document to the DB
-            console.log("[Activity Manager]: Failed to send new activity to database")
+            Logger("[Activity Manager]: Failed to send new activity to database")
             interaction.editReply({//reply with failure
                 content: "Interal Error, admin contacted",
                 flags: MessageFlags.Ephemeral
@@ -172,10 +178,10 @@ async function createActivityCard(interaction){
     }catch(err){//catch any thrown errors in this entire process
         let content = null;//empty variable to hold content to send back to submitter
         if(err.hasOwnProperty("code") && err.code==="ACVAL"){//if the error thrown has the code given by form validation
-            console.log("[Activity Manager]: User failure when creating new card:\n\t"+err.message)
+            Logger("Activity Manager","User failure when creating new card:\n\t"+err.message,"WARN")
             content = err.message;//send back santized error message to user
         }else{
-            console.log("[Activity Manager]: Unidentified error in creating new card: \n\t"+err.message);//general unidentified error
+            Logger("Activity Manager","Unidentified error in creating new card: \n\t"+err.message,"ERROR");//general unidentified error
             content = "Interal Error, admin contacted"
         }
         interaction.editReply({//send error reply
@@ -197,7 +203,7 @@ async function createActivityCard(interaction){
 async function addCardMember(joinData){
 
     processing = true;//deprecated flag, ignore
-    console.log(`[Activity Manager]: Processing join request by ${joinData.member} on activity ${joinData.activityid}`)
+    Logger("Activity Manager",`Processing join request by ${joinData.member} on activity ${joinData.activityid}`,"INFO")
     try{
         let res = null;
         let update = {//instantiate update object, with id of activity and empty modification attribute, this is passed to the update document function of the DB to update an activity document
@@ -251,14 +257,14 @@ async function addCardMember(joinData){
                 flags: MessageFlags.Ephemeral
             })
         }else{
-            console.log("[Activity Manager]: Failed to send activity update to database");
+            Logger("Activity Manager","Failed to send activity update to database","ERROR");
             joinData.interact.editReply({
                 content:`Internal errror, admin contacted`,
                 flags: MessageFlags.Ephemeral
             })
         }
     }catch(err){//catch any unidentified errors
-        console.log("[Activity Manager]: Unidentified error caught in adding card member:\n\t"+err.stack);
+        Logger("Activity Manager","Unidentified error caught in adding card member:\n\t"+err.stack,"ERROR");
         joinData.interact.editReply(
             {
                 flags: MessageFlags.Ephemeral,
@@ -275,7 +281,7 @@ async function addCardMember(joinData){
 async function removeCardMember(leaveData){
 
     processing = true;
-    console.log(`[Activity Manager]: Processing leave request by ${leaveData.member} on activity ${leaveData.activityid}`);
+    Logger("Activity Manager",`Processing leave request by ${leaveData.member} on activity ${leaveData.activityid}`,"INFO");
 
     try{
         let doc = await getCardFromDB(leaveData.activityid);//get the document from DB
@@ -316,7 +322,7 @@ async function removeCardMember(leaveData){
         }
 
     }catch(err){
-        console.log("[Activity Manager]: Unidentified error caught in removing card member:\n\t"+err.stack);
+        Logger("Activity Manager","Unidentified error caught in removing card member:\n\t"+err.stack,"ERROR");
         leaveData.interact.editReply(
             {
                 flags: MessageFlags.Ephemeral,
@@ -329,7 +335,7 @@ async function removeCardMember(leaveData){
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 async function editCard(interaction){
-
+    Logger("Activity Manager",`Processing edit request for activity ${interaction.customId.split("/")[2]} by ${interaction.member.displayName}`,"INFO")
     try{
         const doc = await getCardFromDB(interaction.customId.split("/")[2]);
         const edits = {
@@ -384,7 +390,7 @@ async function editCard(interaction){
         }
 
     }catch(err){
-        console.log("[Activity Manager]: Unidentified error in card editing:\n\t"+err.message);
+        Logger("Activity Manager","Unidentified error in card editing:\n"+err.stack,"ERROR");
         interaction.editReply({
             content: `Internal error, admin contacted`,
         })
@@ -405,7 +411,7 @@ async function getEditModal(editData){
     const doc = await getCardFromDB(editData.activityid);
 
     if(!verifyOwner(editData.interact,doc.owner)){
-        console.log(`[Activity Manager]: ${editData.member} is not the owner of the card or an admin. Delete request rejected`);
+        Logger("Activity Manager",`${editData.member} is not the owner of the card or an admin. Edit request rejected`,"WARN");
         editData.interact.reply({
             content: "You are not the owner of this card or an admin",
             flags: MessageFlags.Ephemeral
@@ -462,17 +468,17 @@ async function setRecur(){
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 async function deleteCard(deleteData,override=false){
 
-    console.log(`[Activity Manager]: Processing card deletion request by ${deleteData.member} for activity ${deleteData.activityid}`);
+    Logger("Activity Manager",`Processing card deletion request by ${deleteData.member} for activity ${deleteData.activityid}`,"INFO");
 
     if(override){
-        console.log(`[Activity Manager]: Deletion request by module override`);
+        Logger("Activity Manager",`Deletion request by module override`,"INFO");
     }
 
     try{
         const doc = await getCardFromDB(deleteData.activityid);
 
         if(!verifyOwner(deleteData.interact,doc.owner,override)){
-            console.log(`[Activity Manager]: ${deleteData.member} is not the owner of the card or an admin. Delete request rejected`);
+            Logger("Activity Manager",`${deleteData.member} is not the owner of the card or an admin. Delete request rejected`,"WARN");
             deleteData.interact.editReply({
                 content: "You are not the owner of this card or an admin",
                 flags: MessageFlags.Ephemeral
@@ -481,7 +487,7 @@ async function deleteCard(deleteData,override=false){
         }
 
         const msg = await (await ServerBot.getChannel(doc.channelID)).messages.fetch(doc.messageID);
-        await msg.delete();
+        msg.delete();
 
         await DBManager.deleteDocument(ActivityCollection,{id: deleteData.activityid});
         if(!override){
@@ -492,7 +498,7 @@ async function deleteCard(deleteData,override=false){
         }
 
     }catch(err){
-        console.log("[Activity Manager]: Unidentified error caught in deleting card:\n\t"+err.message);
+        Logger("Activity Manager","Unidentified error caught in deleting card:\n\t"+err.message,"INFO");
         if(!override){
             deleteData.interact.editReply({
                 content: "Internal error, admin contacted",
@@ -623,7 +629,7 @@ async function autoNotifyJoined(activityID){
     let joined = null;
     let max=null;
 
-    console.log("[Activity Manager]: Sending activity notifications for activity "+activityID);
+    Logger("Activity Manager","Sending activity notifications for activity "+activityID,"INFO");
 
     const doc = await getCardFromDB(activityID);
 
@@ -654,7 +660,7 @@ async function autoNotifyJoined(activityID){
  * @returns {Promise<void>}
  */
 async function autoDelete(activityID){
-    console.log("[Activity Manager]: Preparing to auto-delete activity "+activityID);
+    Logger("Activity Manager","Preparing to auto-delete activity "+activityID,"INFO");
     await deleteCard({
         activityid: activityID,
         member: "SCHEDULED DELETION",
@@ -671,15 +677,20 @@ function scheduleActivityJobs(activityID,eventTime){
 
     const delay = config.activities.jobDelay//fetch configured job delay value (is a number in milliseconds)
 
+    if(eventTime-Date.now()>DorkTime.getDayMillis()){
+        Logger("Activity Manager","Activity commences in more than a day, deferring job scheduling","INFO");
+        return;
+    }
+
     if(eventTime - delay <= Date.now()){
-        console.log("[Activity Manager]: Cannot schedule auto-notify for "+activityID+" when notification window has passed");
+        Logger("Activity Manager","Cannot schedule auto-notify for "+activityID+" when notification window has passed","WARN");
     }else{
         NotificationJobs[activityID]= setTimeout(async()=>{//schedule auto-notify
             await autoNotifyJoined(activityID);
         },(eventTime-delay)-Date.now())//notify sometime before event time
     }
     if(eventTime + delay <= Date.now()){
-        console.log("[Activity Manager]: Cannot schedule auto-delete for "+activityID+" when event deletion window has passed");
+        Logger("Activity Manager","Cannot schedule auto-delete for "+activityID+" when event deletion window has passed","WARN");
     }else{
         DeletionJobs[activityID]= setTimeout(async()=>{//schedule delete
             await autoDelete(activityID);
@@ -688,7 +699,7 @@ function scheduleActivityJobs(activityID,eventTime){
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 function cancelActivityJobs(activityID){
-    console.log("[Activity Manager: Preparing to cancel scheduled jobs for activity "+activityID);
+    Logger("Activity Manager","Preparing to cancel scheduled jobs for activity "+activityID,"INFO");
     const notifyID = NotificationJobs[activityID]
     const deleteID = DeletionJobs[activityID]
 
@@ -700,7 +711,7 @@ function cancelActivityJobs(activityID){
         clearTimeout(deleteID);
         delete DeletionJobs[activityID];
     }
-    console.log("[Activity Manager]: Deleted scheduled jobs for activity "+activityID);
+    Logger("Activity Manager","Deleted scheduled jobs for activity "+activityID,"INFO");
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -708,17 +719,22 @@ function cancelActivityJobs(activityID){
  * @returns {Promise<void>}
  */
 async function compileJobs(){
-    console.log("[Activity Manager]: Compiling auto jobs for all scheduled activities");
+    Logger("Activity Manager","Compiling auto jobs for all scheduled activities","INFO");
     const docs = await DBManager.getAllDocuments(ActivityCollection);
     for(let activity of docs){
         scheduleActivityJobs(activity.id, activity.time*1000);
-        console.log("[Activity Manager]: Scheduled jobs for activity "+activity.id);
+        Logger("Activity Manager","Scheduled jobs for activity "+activity.id,"INFO");
     }
-    console.log("[Activity Manager]: Job compilation complete");
+    Logger("Activity Manager","Job compilation complete","INFO");
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 async function getCardFromDB(actid){
-    return await DBManager.getDocument(ActivityCollection,{id: actid});
+    Logger("Activity Manager","Retrieving activity details from database","INFO")
+    try{
+        return await DBManager.getDocument(ActivityCollection,{id: actid});
+    }catch(err){
+        Logger("Activity Manager","Failed to acquire activity details from database","ERROR")
+    }
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 function getUnixSeconds(input){
@@ -729,6 +745,44 @@ function getUnixSeconds(input){
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 function getListCapacityLiteral(current, capacity){
     return "Capacity: "+current+"/"+capacity;
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+ * Function reset the module cached jobs
+ * @returns {Promise<void>}
+ */
+async function reset(){
+    Logger("Activity Manager","Midnight reset commencing, clearing jobs cache and re-compiling","INFO");
+
+    //clear any active jobs, if any exist
+    Object.values(DeletionJobs).forEach(job =>{
+        clearTimeout(job)
+    });
+    Object.values(NotificationJobs).forEach(job =>{
+        clearTimeout(job)
+    });
+    DeletionJobs = {};
+    NotificationJobs = {};
+
+    try{
+        await compileJobs();
+        Logger("Activity Manager","Reset completed","INFO");
+    }catch(e){
+        Logger("Activity Manager","Failed to transition to full reset:\n"+e.stack,"ERROR");
+    }
+    scheduleReset();
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+function scheduleReset(){
+
+    Logger("Activity Manager","Scheduling new midnight cache reset","INFO")
+
+    //get the number of milliseconds until midnight
+    const delay = DorkTime.midnight();
+
+    setTimeout(async()=>{
+        reset();
+    },delay)
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 export default{

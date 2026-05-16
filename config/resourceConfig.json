@@ -10,6 +10,7 @@
     "botConfig.json",
     "serverConfig.json",
     "eventsConfig.json",
-    "databaseConfig.json"
+    "databaseConfig.json",
+    "loggerConfig.json"
   ]
 }

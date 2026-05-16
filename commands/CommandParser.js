@@ -10,6 +10,7 @@ import {simulate_join, insult, location, activity, UncleProtocol, JoinClan} from
 let botGlobal = null
 let BotResources = null
 let ServerBus = null
+let Logger = null;
 
 import simulateJoin from "./functions/SimulateJoin.js";
 import InsultCommand from "./functions/insult.js";
@@ -19,11 +20,12 @@ import EventModalCreate from "./functions/EventModal.js";
 import JoinClanFunc from "./functions/JoinClan.js";
 import GameAssignment from "./functions/GameRoles.js";
 ////////////////////////////////////////////////////////////////////////////////////
-function init(bot, resources, bus){
+function init(bot, resources, bus,logger){
     registerCommands(bot);
     botGlobal = bot
     BotResources = resources;
     ServerBus = bus;
+    Logger = logger;
 }
 ////////////////////////////////////////////////////////////////////////////////////
 async function parseCommand(interaction){
@@ -44,7 +46,7 @@ async function parseCommand(interaction){
             await JoinClanFunc(interaction, BotResources.getServerConfig().clanLinks);
             break;
         default:
-            console.log("[Command Handler]: No such command /"+interaction.commandName);
+            Logger.log("Command Parser","No such command /"+interaction.commandName,"WARN");
     }
 }
 ////////////////////////////////////////////////////////////////////////////////////

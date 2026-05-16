@@ -10,14 +10,15 @@ import GameRoles from "./messages/GameRolesMessage.js";
 
 let Resources =null;
 let Dork_13 = null;
+let Logger = null;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 async function sendNotifRolesMessage(channel, roles, message){
     try{
-        console.log("[Messaging Service]: Sending notification roles message");
+        Logger.log("Messaging Service","Sending notification roles message","INFO");
         await NotificationRoles(channel, roles, message);
-        console.log("[Messaging Service]: Message Sent");
+        Logger.log("Messaging Service", "Message Sent","INFO");
     }catch(error){
-        console.log("[Messaging Service]: Failed to send notification roles message message:\n\t"+error.message);
+        Logger.log("Messaging Service","Failed to send notification roles message message:\n\t"+error.message,"ERROR");
     }
 
 }
@@ -26,11 +27,15 @@ async function sendModApplyMessage(){
 
     const destChannel = await Dork_13.getChannel(Resources.getServerConfig().moderation.recruitment.moderator.apply_message_dest);
 
-    const message = RecruitApplyMessage(destChannel, Resources.getServerConfig().moderation.recruitment.moderator.apply_message,Resources.getServerConfig().moderation.recruitment.moderator.apply_button_id)
+    const message = RecruitApplyMessage(
+        destChannel,
+        Resources.getServerConfig().moderation.recruitment.moderator.apply_message,
+        Resources.getServerConfig().moderation.recruitment.moderator.apply_button_id)
     try{
         await destChannel.send(message);
     }catch (error){
-        console.log("[Messaging Service]: Failed to send moderation application message\n\t"+error.message);
+        Logger.log("Messaging Service","Failed to send moderation application message\\n\\t\"+error.message","ERROR")
+
     }
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41,20 +46,27 @@ async function sendRaidMasterApplyMessage(){
     try{
         await destChannel.send(message);
     }catch (error){
-        console.log("[Messaging Service]: Failed to send moderation application message\n\t"+error.message);
+        Logger.log("Messaging Service","Failed to send moderation application message\n\t"+error.message,"ERROR")
+
     }
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 async function sendGamesRoleMessage(channel,roles,message,btnid){
-    console.log("[Messaging Service]: Sending game roles message...");
+    Logger.log("Messaging Service","Sending game role message message","INFO");
     await GameRoles(channel,roles,message,btnid);
-    console.log("[Messaging Service]: Game roles message sent");
+    Logger.log("Messaging Service","Game roles message sent","INFO");
 
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-function init(resources,dork){
+async function sendLogMessage(message){
+    let destination = await Dork_13.getChannel(Resources.getServerConfig().server.channels.botLogs);
+    destination.send(message);
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////
+function init(resources,dork,logger){
     Resources = resources;
     Dork_13 = dork;
+    Logger = logger;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 export default{
@@ -62,5 +74,6 @@ export default{
     init,
     sendModApplyMessage,
     sendGamesRoleMessage,
-    sendRaidMasterApplyMessage
+    sendRaidMasterApplyMessage,
+    sendLogMessage,
 }

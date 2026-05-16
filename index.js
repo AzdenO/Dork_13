@@ -8,8 +8,8 @@ import ServerManager from "./server/ServerManager.js";
 import ServerBus from "./events/emitter/ServerEmitter.js";
 import DatabaseManager from "./database/Database.js";
 import {execSync} from "child_process";
+import LoggingMachine from "./server/logging/Logger.js";
 ///////////////////////////////////////////////////////////////////////////////////////
-
 /**
  * Config .env file so all variables are loaded into process.env
  */
@@ -31,7 +31,6 @@ const client = new Discord.Client({
  * Initialise new Bot Object, providing the discord client object
  * @type {Dork}
  */
-
 await DatabaseManager.init();
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -40,19 +39,20 @@ await DatabaseManager.init();
  * @type {Resources}
  */
 const ResourceManager = new Resources();
-
+LoggingMachine.pre_init(ServerBus,ResourceManager);
+LoggingMachine.init();
 /**
  * Initialise new Bot Object, providing the discord client object
  * @type {Dork}
  */
-const DorkBot = new Dork(client, ResourceManager.getServerConfig());
+const DorkBot = new Dork(client, ResourceManager.getServerConfig(),LoggingMachine.log);
 
 
 
 /**
  * Initialise commands module
  */
-Commands.init(DorkBot.getClient(), ResourceManager, ServerBus);
+Commands.init(DorkBot.getClient(), ResourceManager, ServerBus,LoggingMachine.log);
 
 /**
  * Initialise events handler module
@@ -62,6 +62,7 @@ EventHandler.init({
     Discord: Discord,
     CommandsParser: Commands,
     ServerBus: ServerBus,
+    Logger: LoggingMachine.log
 },DorkBot.getClient());
 
 /**
@@ -72,14 +73,14 @@ ServerManager.init({
     commands: Commands,
     events: EventHandler,
     ServerBus: ServerBus,
-    DBManager: DatabaseManager
+    DBManager: DatabaseManager,
+    Logger: LoggingMachine.log
 },DorkBot)
 //////////////////////////////////////////////////////////////////////////////////////
 ServerManager.startBot();
 
 process.on("uncaughtException", (err) => {
-    console.error("[Main]: Uncaught exception, process exit");
-    console.error(err)
+    LoggingMachine.log("Main","Uncaught exception: "+err.stack,"ERROR")
     execSync(`powershell -c (New-Object Media.SoundPlayer "O:/Storage/Dev/Level_4/dork_13/assets/audio/shutDown.wav").playSync();`)
 
 
